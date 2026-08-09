@@ -1,0 +1,4130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Diário — todas as formas de guardar e relembrar</title>
+
+<!-- PWA: manifest, ícones e cor de tema -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e8dcc0">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Diário">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&family=Poppins:wght@400;500&family=Caveat:wght@500;600&family=EB+Garamond:ital@0;1&family=Dancing+Script:wght@500;600&family=Sacramento&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#e8dcc0;
+    --panel:#f3e9d2;
+    --card:#f8f0dc;
+    --card-2:#efe1bf;
+    --ink:#4a3524;
+    --ink-dim:#8a7455;
+    --line:#c9b287;
+    --sage:#7a2e2e;
+    --sage-dim:#8f3a3a;
+    --gold:#8c6a2f;
+    --gold-dim:#a68847;
+    --clay:#a13d2e;
+    --radius:3px;
+    --line-height:1.6;
+    --letter-spacing:0px;
+    --font-body:'Cormorant Garamond',serif;
+    --font-heading:'Playfair Display',serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(255,250,235,.5) 0%, rgba(255,250,235,0) 45%),
+      radial-gradient(ellipse at 90% 100%, rgba(139,105,60,.14) 0%, rgba(139,105,60,0) 50%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:var(--font-size, 18px);
+    line-height:var(--line-height);
+    letter-spacing:var(--letter-spacing);
+    -webkit-font-smoothing:antialiased;
+  }
+  .texture-layer{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(120,95,55,.035) 0px, rgba(120,95,55,.035) 1px, transparent 1px, transparent 3px);
+  }
+  .wrap{
+    max-width:840px;margin:0 auto;padding:2.8rem 1.6rem 4rem;
+    position:relative;z-index:1;
+  }
+  header.top{margin-bottom:1.6rem;text-align:center;}
+
+  .install-banner{display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;background:var(--card-2);border:1px solid var(--line);border-radius:var(--radius);padding:.6rem .9rem;margin-bottom:1.2rem;font-size:.85rem;color:var(--ink-dim);}
+  .install-banner-text{flex:1;min-width:180px;}
+  .install-banner-dismiss{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.9rem;padding:.2rem;}
+  .install-banner-dismiss:hover{color:var(--clay);}
+  header.top h1{
+    font-family:'Great Vibes',cursive;
+    font-weight:400;
+    font-size:3.4rem;
+    margin:0;
+    color:var(--sage);
+    letter-spacing:.5px;
+  }
+  header.top .flourish{
+    width:180px;height:14px;margin:.3rem auto .7rem;
+    opacity:.55;
+  }
+  header.top p{
+    color:var(--ink-dim);
+    font-size:1.05rem;
+    font-style:italic;
+    margin:0;
+  }
+  section.panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px rgba(90,65,30,.12);
+    border-radius:2px;
+    padding:1.7rem 1.8rem;
+    margin-bottom:1.8rem;
+    position:relative;
+  }
+  section.panel::before{
+    content:'';
+    position:absolute;inset:6px;
+    border:1px solid rgba(140,106,47,.28);
+    pointer-events:none;
+  }
+  h2.sec-title{
+    font-family:var(--font-heading);
+    font-style:italic;
+    font-size:1.3rem;
+    font-weight:500;
+    margin:0 0 1rem;
+    color:var(--sage);
+  }
+
+  /* ---- modo de escrita (tabs) ---- */
+  .mode-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.1rem;}
+  .mode-tab{
+    padding:.45rem .9rem;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-dim);
+    font-size:.85rem;
+    cursor:pointer;
+    font-family:var(--font-body);
+    transition:all .15s ease;
+  }
+  .mode-tab:hover{border-color:var(--sage-dim);}
+  .mode-tab.active{
+    background:var(--sage-dim);
+    border-color:var(--sage-dim);
+    color:#f7ecd6;
+  }
+
+  textarea, input[type=text]{
+    width:100%;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:.95rem;
+    padding:.7rem .8rem;
+    resize:vertical;
+  }
+  textarea{min-height:110px;line-height:1.6;}
+  textarea:focus, input:focus{outline:none;border-color:var(--sage-dim);}
+  textarea::placeholder, input::placeholder{color:var(--ink-dim);opacity:.7;}
+
+  .field-row{display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap;}
+  .field-row > *{flex:1;min-width:150px;}
+
+  .mood-row{display:flex;gap:.5rem;flex-wrap:wrap;}
+  .mood-btn{
+    flex:1;min-width:70px;
+    padding:.6rem .3rem;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink-dim);
+    cursor:pointer;
+    font-size:.8rem;
+    text-align:center;
+  }
+  .mood-btn .em{display:block;font-size:1.4rem;margin-bottom:.2rem;}
+  .mood-btn.selected{border-color:var(--gold-dim);background:var(--card-2);color:var(--sage);}
+  .mood-btn .mood-btn-img{width:1.4rem;height:1.4rem;object-fit:cover;border-radius:4px;margin:0 auto .2rem;display:block;}
+  .mood-btn .mood-btn-icon{display:block;margin-bottom:.2rem;}
+
+  /* ---- humor do dia (junto à escrita) ---- */
+  .mood-quick-row{
+    display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+    margin-top:.9rem;padding-top:.9rem;border-top:1px dashed var(--line);
+  }
+  .mood-quick-label{font-size:.8rem;color:var(--ink-dim);font-style:italic;display:flex;align-items:center;gap:.5rem;}
+  .mood-edit-btn{
+    background:none;border:none;color:var(--ink-dim);font-size:.72rem;
+    text-decoration:underline;cursor:pointer;font-family:var(--font-body);padding:0;
+  }
+  .mood-edit-btn:hover{color:var(--sage);}
+  .mood-quick-chips{display:flex;gap:.4rem;flex-wrap:wrap;}
+  .mood-chip{
+    width:2.1rem;height:2.1rem;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.1rem;
+    transition:all .15s ease;
+    padding:0;
+    overflow:hidden;
+  }
+  .mood-chip:hover{border-color:var(--sage-dim);}
+  .mood-chip.selected{border-color:var(--gold-dim);background:var(--card-2);box-shadow:0 0 0 2px var(--card-2);}
+  .mood-chip img{width:100%;height:100%;object-fit:cover;}
+  .mood-chip-clear{color:var(--ink-dim);font-size:.9rem;}
+
+  .mood-editor{
+    margin-top:.7rem;padding:.9rem;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);display:flex;flex-direction:column;gap:.6rem;
+  }
+  .mood-editor-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+  .mood-editor-preview{width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex:none;}
+  .mood-editor-preview img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
+  .mood-editor-label{font-size:.82rem;color:var(--ink-dim);min-width:70px;}
+  .mood-editor-input{max-width:70px;text-align:center;font-size:1rem;padding:.35rem;}
+  .mood-editor-upload{font-size:.72rem;padding:.35rem .6rem;}
+  .mood-editor-reset{
+    background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.85rem;
+    padding:0 .2rem;
+  }
+  .mood-editor-reset:hover{color:var(--clay);}
+  .mood-editor-hint{font-size:.75rem;color:var(--ink-dim);font-style:italic;margin:0;}
+
+  .gratitude-list{display:flex;flex-direction:column;gap:.5rem;}
+
+  .prompt-box{
+    border-left:2px solid var(--sage-dim);
+    padding:.6rem .9rem;
+    margin-bottom:.8rem;
+    background:var(--card-2);
+  }
+  .prompt-text{
+    font-family:var(--font-heading);
+    font-style:italic;
+    font-size:1.08rem;
+    color:var(--sage);
+    margin:0 0 .4rem;
+    line-height:1.5;
+  }
+  .prompt-swap{
+    background:none;
+    border:none;
+    color:var(--ink-dim);
+    font-size:.78rem;
+    font-style:italic;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:0;
+  }
+  .prompt-swap:hover{color:var(--sage);}
+  .entry-prompt{
+    font-family:var(--font-heading);
+    font-style:italic;
+    font-size:.92rem;
+    color:var(--sage);
+    margin:0 0 .4rem;
+    padding-left:.6rem;
+    border-left:2px solid var(--line);
+  }
+
+  .photo-drop{
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius);
+    padding:1.4rem;
+    text-align:center;
+    color:var(--ink-dim);
+    cursor:pointer;
+    font-size:.9rem;
+  }
+  .photo-drop:hover{border-color:var(--sage-dim);}
+  .photo-preview{max-width:100%;max-height:220px;border-radius:8px;margin-top:.8rem;display:none;}
+
+  .save-row{display:flex;justify-content:space-between;align-items:center;margin-top:1.2rem;gap:1rem;flex-wrap:wrap;}
+  .save-btn{
+    background:var(--sage-dim);
+    color:#f7ecd6;
+    border:1px solid var(--sage);
+    padding:.6rem 1.6rem;
+    border-radius:999px;
+    font-family:var(--font-heading);
+    font-style:italic;
+    font-size:.95rem;
+    font-weight:500;
+    letter-spacing:.3px;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(90,20,20,.3);
+  }
+  .save-btn:hover{background:var(--sage);}
+  .save-status{font-size:.8rem;color:var(--ink-dim);}
+
+  /* ---- exportar ---- */
+  .export-desc{color:var(--ink-dim);font-size:.9rem;margin:0 0 1rem;font-style:italic;}
+  .export-row{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.7rem;}
+  .export-btn{
+    flex:1;min-width:170px;
+    display:flex;align-items:center;gap:.7rem;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:.8rem .9rem;
+    cursor:pointer;
+    text-align:left;
+    font-family:var(--font-body);
+  }
+  .export-btn:hover{border-color:var(--sage-dim);background:var(--card-2);}
+  .export-btn .export-ic{font-size:1.3rem;color:var(--sage);flex-shrink:0;}
+  .export-btn .export-txt{display:flex;flex-direction:column;gap:.15rem;}
+  .export-btn .export-txt b{color:var(--ink);font-weight:500;font-size:.92rem;font-style:normal;}
+  .export-btn .export-txt small{color:var(--ink-dim);font-size:.78rem;}
+
+  @media print{
+    header.top, section.panel:not(#printArea), .mode-tabs, .dial-wrap, #recallContent, #exportPanel{display:none !important;}
+    body{background:#fff;}
+    #printArea{display:block !important;}
+  }
+  #printArea{display:none;}
+  #printArea .entry-card{break-inside:avoid;margin-bottom:1.2rem;}
+  #printArea .entry-del{display:none;}
+
+  /* ---- segurança / bloqueio ---- */
+  .lock-overlay{
+    position:fixed;inset:0;z-index:999;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    padding:1.5rem;
+  }
+  .lock-card{
+    max-width:340px;width:100%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1.8rem 1.6rem;
+    text-align:center;
+  }
+  .lock-card h2{margin:0 0 .5rem;font-family:var(--font-heading);color:var(--ink);font-size:1.4rem;}
+  .lock-card p{color:var(--ink-dim);font-size:.88rem;margin:0 0 1.1rem;}
+  .lock-card input{
+    width:100%;box-sizing:border-box;
+    padding:.65rem .8rem;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:1rem;
+    margin-bottom:.6rem;
+  }
+  .lock-error{color:#a13d2e !important;font-weight:500;min-height:1.1em;}
+
+  /* ---- dial de recordação (signature element) ---- */
+  .dial-wrap{display:flex;gap:1.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1.3rem;}
+  .dial{
+    position:relative;
+    width:170px;height:170px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:radial-gradient(circle at center, var(--card) 0%, var(--panel) 72%);
+    flex-shrink:0;
+  }
+  .dial .center{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:56px;height:56px;border-radius:50%;
+    background:var(--card-2);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-heading);font-size:.75rem;color:var(--gold);
+    text-align:center;line-height:1.1;
+  }
+  .dial-node{
+    position:absolute;
+    width:64px;height:64px;
+    margin-left:-32px;margin-top:-32px;
+    border-radius:50%;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:.65rem;
+    cursor:pointer;
+    text-align:center;
+    line-height:1.15;
+    transition:all .15s ease;
+  }
+  .dial-node .ic{font-size:1.15rem;margin-bottom:.15rem;}
+  .dial-node:hover{border-color:var(--sage-dim);}
+  .dial-node.active{
+    background:var(--sage-dim);
+    border-color:var(--sage-dim);
+    color:#f7ecd6;
+  }
+  .dial-legend{flex:1;min-width:200px;color:var(--ink-dim);font-size:.85rem;line-height:1.6;}
+  .dial-legend b{color:var(--ink);font-family:var(--font-heading);font-weight:500;}
+
+  /* ---- lista de entradas ---- */
+  .entry-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1rem 1.1rem;
+    margin-bottom:1rem;
+    box-shadow:0 3px 8px rgba(90,65,30,.14);
+    position:relative;
+  }
+  .entry-card::after{
+    content:'';
+    position:absolute;top:0;right:0;
+    width:0;height:0;
+    border-style:solid;
+    border-width:0 16px 16px 0;
+    border-color:transparent var(--bg) transparent transparent;
+    opacity:.8;
+  }
+  .entry-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;gap:.6rem;flex-wrap:wrap;}
+  .entry-date{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--gold);}
+  .entry-mode{font-size:.72rem;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em;}
+  .entry-body{font-size:.92rem;line-height:1.6;white-space:pre-wrap;}
+  .entry-tags{margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap;}
+  .tag-pill{
+    font-size:.72rem;
+    padding:.15rem .6rem;
+    border-radius:999px;
+    background:var(--card-2);
+    color:var(--ink-dim);
+    border:1px solid var(--line);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .tag-pill:hover{border-color:var(--sage-dim);color:var(--sage);background:var(--card);}
+
+  /* ---- chips rápidos de tema (na hora de guardar) ---- */
+  .quick-tags-row{margin-top:.7rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+  .quick-tags-label{font-size:.75rem;color:var(--ink-dim);font-style:italic;}
+  .quick-tags{display:flex;gap:.4rem;flex-wrap:wrap;}
+  .quick-tag-chip{
+    font-size:.75rem;
+    padding:.28rem .75rem;
+    border-radius:999px;
+    background:transparent;
+    color:var(--ink-dim);
+    border:1px solid var(--line);
+    cursor:pointer;
+    font-family:var(--font-body);
+    transition:all .15s ease;
+  }
+  .quick-tag-chip:hover{border-color:var(--sage-dim);}
+  .quick-tag-chip.active{background:var(--sage-dim);border-color:var(--sage-dim);color:#f7ecd6;}
+
+  /* ---- nuvem de etiquetas (Relembrar > Etiquetas) ---- */
+  .tag-cloud{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;}
+  .tag-cloud-pill{
+    font-family:var(--font-heading);
+    font-style:italic;
+    padding:.4rem 1rem;
+    border-radius:999px;
+    background:var(--card);
+    color:var(--sage);
+    border:1px solid var(--line);
+    cursor:pointer;
+    transition:all .15s ease;
+    line-height:1;
+  }
+  .tag-cloud-pill:hover{border-color:var(--sage-dim);background:var(--card-2);}
+  .tag-cloud-pill .tag-count{font-size:.68rem;color:var(--ink-dim);font-style:normal;font-family:var(--font-body);margin-left:.3rem;}
+  .tag-cloud-pill.suggest{opacity:.65;font-style:normal;font-family:var(--font-body);font-size:.82rem;}
+  .tag-filter-head{display:flex;align-items:center;gap:.9rem;margin-bottom:1rem;flex-wrap:wrap;}
+  .tag-filter-title{font-family:var(--font-heading);font-style:italic;font-size:1.05rem;color:var(--sage);}
+  .tag-filter-count{font-size:.78rem;color:var(--ink-dim);font-style:normal;}
+  .entry-photo{max-width:100%;border-radius:8px;margin-top:.6rem;}
+  .entry-titulo{
+    font-family:var(--font-heading);
+    font-style:italic;
+    font-size:1.12rem;
+    font-weight:500;
+    color:var(--sage);
+    margin:0 0 .2rem;
+  }
+  .entry-subtitulo{
+    font-family:var(--font-body);
+    font-size:.9rem;
+    color:var(--ink-dim);
+    font-style:italic;
+    margin:0 0 .6rem;
+  }
+
+  /* ---- organizar por data ---- */
+  .org-year, .org-month, .org-day{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--card-2);
+    margin-bottom:.7rem;
+    padding:0;
+  }
+  .org-year > summary, .org-month > summary, .org-day > summary{
+    cursor:pointer;
+    padding:.6rem .9rem;
+    font-family:var(--font-heading);
+    font-style:italic;
+    color:var(--sage);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+  }
+  .org-year > summary{font-size:1.15rem;text-transform:capitalize;}
+  .org-month > summary{font-size:1rem;text-transform:capitalize;}
+  .org-day > summary{font-size:.88rem;color:var(--ink-dim);font-style:normal;}
+  .org-year > summary::-webkit-details-marker,
+  .org-month > summary::-webkit-details-marker,
+  .org-day > summary::-webkit-details-marker{display:none;}
+  .org-year > summary::before{content:'▸ ';font-size:.8em;}
+  .org-year[open] > summary::before{content:'▾ ';}
+  .org-month > summary::before{content:'▸ ';font-size:.8em;}
+  .org-month[open] > summary::before{content:'▾ ';}
+  .org-day > summary::before{content:'▸ ';font-size:.8em;}
+  .org-day[open] > summary::before{content:'▾ ';}
+  .org-month{margin:0 .7rem .6rem;background:var(--panel);}
+  .org-day{margin:0 .7rem .6rem;background:var(--card);}
+  .org-day .entry-card{margin:0 .8rem .8rem;}
+  .entry-del{
+    background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.75rem;
+  }
+  .entry-del:hover{color:var(--clay);}
+
+  .empty-msg{color:var(--ink-dim);font-size:.9rem;padding:1rem 0;text-align:center;}
+
+  /* ---- calendário ---- */
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;}
+  .cal-nav{background:none;border:1px solid var(--line);color:var(--ink-dim);border-radius:6px;padding:.25rem .6rem;cursor:pointer;font-size:.85rem;}
+  .cal-nav:hover{border-color:var(--sage-dim);}
+  .cal-title{font-family:var(--font-heading);font-size:1rem;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{text-align:center;font-size:.7rem;color:var(--ink-dim);padding:.3rem 0;}
+  .cal-day{
+    aspect-ratio:1;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:6px;
+    font-size:.82rem;
+    color:var(--ink-dim);
+    cursor:default;
+    position:relative;
+  }
+  .cal-day.has-entry{background:var(--card-2);color:var(--ink);cursor:pointer;}
+  .cal-day.has-entry:hover{border:1px solid var(--sage-dim);}
+  .cal-day.entries-2{background:color-mix(in srgb, var(--sage-dim) 40%, var(--card-2));}
+  .cal-day.entries-3plus{background:color-mix(in srgb, var(--sage-dim) 75%, var(--card-2));color:#f7ecd6;}
+  .cal-day.today{box-shadow:inset 0 0 0 1px var(--gold-dim);}
+  .cal-day.selected{background:var(--sage-dim);color:#f7ecd6;}
+  .cal-day-num{line-height:1;}
+  .cal-day-dots{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:.34rem;letter-spacing:1.5px;line-height:1;opacity:.85;}
+  .cal-day-moon{position:absolute;top:3px;right:3px;line-height:0;opacity:.8;}
+  .cal-day-cycle{position:absolute;top:3px;left:3px;line-height:0;opacity:.9;}
+  .cal-day-temp{position:absolute;bottom:3px;right:3px;line-height:0;opacity:.9;}
+  .cal-day-med{position:absolute;bottom:3px;left:3px;line-height:0;opacity:.9;font-size:.68rem;}
+  .cycle-svg{display:block;vertical-align:middle;}
+  .cal-legend-item .cycle-svg{margin-right:.15rem;}
+
+  .cycle-fields{display:flex;gap:1rem;flex-wrap:wrap;margin:.5rem 0;}
+  .cycle-fields label{font-size:.78rem;color:var(--ink-dim);display:flex;align-items:center;gap:.4rem;}
+  .cycle-fields input{width:55px;padding:.3rem;text-align:center;}
+  .cycle-actions{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.5rem;}
+
+  /* ---- temperatura corporal (termômetro) ---- */
+  .temp-panel{margin-top:.9rem;padding-top:.9rem;border-top:1px dashed var(--line);}
+  .temp-panel-head{font-size:.85rem;color:var(--sage);font-style:italic;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+  .temp-input-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+  .temp-input-row input[type=number]{width:80px;padding:.35rem;text-align:center;}
+  .temp-unit-select{padding:.35rem;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-family:var(--font-body);font-size:.85rem;}
+  .temp-preview{width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;flex:none;}
+  .temp-scale{display:flex;align-items:center;gap:.3rem;margin-top:.5rem;}
+  .temp-scale-bar{flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#f2c94c,#e8791e,#c81e1e);}
+
+  /* ---- medicamentos contraceptivos ---- */
+  .med-list{display:flex;flex-direction:column;gap:.7rem;margin-bottom:.9rem;}
+  .med-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:.7rem .8rem;}
+  .med-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;}
+  .med-card-name{font-family:var(--font-heading);font-style:italic;color:var(--sage);font-size:1rem;}
+  .med-card-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.9rem;padding:0;}
+  .med-card-del:hover{color:var(--clay);}
+  .med-card-meta{font-size:.78rem;color:var(--ink-dim);margin-top:.3rem;}
+  .med-status{font-size:.8rem;margin-top:.4rem;padding:.35rem .55rem;border-radius:var(--radius);display:inline-block;}
+  .med-status.ok{background:var(--card-2);color:var(--ink-dim);}
+  .med-status.soon{background:#f3e0b8;color:#7a5a12;}
+  .med-status.overdue{background:#f0cccc;color:#7a2e2e;}
+  .med-next-list{font-size:.78rem;color:var(--ink-dim);margin-top:.35rem;list-style:none;padding:0;}
+  .med-next-list li{padding:.1rem 0;}
+  .med-card-row{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;flex-wrap:wrap;}
+  .med-card-row label{font-size:.78rem;color:var(--ink-dim);display:flex;align-items:center;gap:.35rem;}
+  .med-form{margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:.6rem;}
+  .med-form-row{display:flex;gap:.6rem;flex-wrap:wrap;}
+  .med-form-row > *{flex:1;min-width:140px;}
+  .med-interval-row{display:flex;gap:.5rem;align-items:center;}
+  .med-interval-row input{width:70px;}
+  .med-interval-row select{flex:1;}
+  .moon-svg{display:block;vertical-align:middle;}
+  .cal-legend-item .moon-svg{margin-right:.15rem;}
+
+  .moon-today-panel{
+    display:flex;align-items:center;gap:.8rem;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:.7rem .9rem;margin-bottom:.9rem;
+  }
+  .moon-today-name{font-family:var(--font-heading);font-style:italic;font-size:1rem;color:var(--sage);}
+  .moon-today-illum{font-size:.78rem;color:var(--ink-dim);margin-top:.1rem;}
+
+  .tide-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:.7rem .9rem;margin-bottom:.9rem;
+  }
+  .tide-panel-head{font-family:var(--font-heading);font-style:italic;font-size:1rem;color:var(--sage);margin-bottom:.5rem;}
+  .lw-status{font-size:.8rem;color:var(--ink-dim);font-style:italic;margin:0 0 .5rem;}
+  .tide-source{font-size:.75rem;color:var(--ink-dim);margin:0 0 .5rem;}
+  .tide-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:.6rem;}
+  .tide-table th{text-align:left;color:var(--ink-dim);font-weight:500;font-size:.72rem;padding:.2rem .4rem;border-bottom:1px solid var(--line);}
+  .tide-table td{padding:.3rem .4rem;border-bottom:1px solid var(--line);}
+  .tide-estimate-label{font-family:var(--font-heading);font-style:italic;color:var(--sage);font-size:.95rem;margin-bottom:.2rem;}
+  .tide-warning{font-size:.78rem;color:var(--clay);margin:0 0 .5rem;}
+  .tide-caveat{font-size:.72rem;color:var(--ink-dim);font-style:italic;margin:.5rem 0 .7rem;line-height:1.5;}
+
+  /* ---- card compacto de maré (Opção A) ---- */
+  .tide-card{display:flex;flex-direction:column;gap:.5rem;}
+  .tide-card-port{font-size:.78rem;color:var(--ink-dim);}
+  .tide-card-status{display:flex;align-items:center;gap:.7rem;}
+  .tide-arrow{font-size:1.7rem;line-height:1;flex:none;width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+  .tide-arrow-up{color:#1f6f5c;background:#dcefe9;}
+  .tide-arrow-down{color:#a1481f;background:#f3e2d6;}
+  .tide-card-headline{font-family:var(--font-heading);font-style:italic;color:var(--sage);font-size:1.05rem;}
+  .tide-card-detail{font-size:.82rem;color:var(--ink-dim);margin-top:.1rem;}
+  .tide-details{font-size:.8rem;color:var(--ink-dim);}
+  .tide-details summary{cursor:pointer;color:var(--sage);}
+  .tide-details .tide-table{margin-top:.5rem;}
+  .tide-card-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.2rem;}
+
+  .weather-main{display:flex;align-items:baseline;gap:.5rem;}
+  .weather-icon{font-size:1.6rem;line-height:1;}
+  .weather-temp{font-family:var(--font-heading);font-style:italic;font-size:1.4rem;color:var(--sage);}
+  .weather-desc{font-size:.85rem;color:var(--ink);margin:.2rem 0;text-transform:capitalize;}
+  .lw-weather-meta{font-size:.78rem;color:var(--ink-dim);margin:0 0 .5rem;}
+
+  .cal-stats{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem;}
+  .cal-stat{
+    background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:.4rem .9rem;font-size:.8rem;color:var(--ink-dim);
+    display:flex;align-items:center;gap:.35rem;
+  }
+  .cal-stat b{color:var(--sage);font-family:var(--font-heading);font-style:italic;font-weight:500;}
+  .cal-stat-bar{
+    width:60px;height:5px;border-radius:999px;background:var(--line);
+    overflow:hidden;display:inline-block;
+  }
+  .cal-stat-bar-fill{height:100%;background:var(--sage-dim);border-radius:999px;}
+
+  .cal-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.9rem;font-size:.72rem;color:var(--ink-dim);align-items:center;}
+  .cal-legend-item{display:flex;align-items:center;gap:.35rem;}
+  .cal-legend-swatch{width:13px;height:13px;border-radius:4px;display:inline-block;}
+
+  /* ---- busca ---- */
+  .search-input{margin-bottom:1rem;}
+  mark.search-hl{background:var(--gold-dim);color:var(--card);padding:0 .15em;border-radius:2px;}
+  .search-meta{font-size:.8rem;color:var(--ink-dim);margin:-.4rem 0 .8rem;font-style:italic;}
+  .search-shortcut-hint{font-size:.72rem;color:var(--ink-dim);font-style:italic;font-weight:400;}
+
+  /* ---- neste dia / aleatório ---- */
+  .otd-nav{display:flex;gap:.6rem;margin-bottom:1rem;}
+
+  /* ---- personalizar ---- */
+  .customize-group{margin-bottom:1.1rem;}
+  .customize-group:last-child{margin-bottom:0;}
+  .customize-label{font-size:.82rem;color:var(--ink-dim);margin:0 0 .5rem;font-style:italic;}
+  .swatch-row{display:flex;gap:.6rem;flex-wrap:wrap;}
+  .swatch-btn{
+    width:38px;height:38px;border-radius:50%;
+    border:2px solid var(--line);
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(90,65,30,.25);
+    padding:0;
+  }
+  .swatch-btn.selected{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink);}
+  .font-row, .decor-row, .size-row{display:flex;gap:.5rem;flex-wrap:wrap;}
+  .font-btn, .decor-btn, .size-btn{
+    padding:.45rem .9rem;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-dim);
+    font-size:.85rem;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .font-btn:hover, .decor-btn:hover, .size-btn:hover{border-color:var(--sage-dim);}
+  .font-btn.selected, .decor-btn.selected, .size-btn.selected{
+    background:var(--sage-dim);
+    border-color:var(--sage-dim);
+    color:#f7ecd6;
+  }
+
+  /* ---- customização profunda ---- */
+  .deep-toggle-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;}
+  .deep-toggle{
+    position:relative;width:38px;height:22px;border-radius:999px;
+    background:var(--line);border:none;cursor:pointer;flex-shrink:0;transition:background .15s ease;
+  }
+  .deep-toggle.on{background:var(--sage);}
+  .deep-toggle::after{
+    content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:transform .15s ease;
+  }
+  .deep-toggle.on::after{transform:translateX(16px);}
+  .deep-toggle-label{font-size:.85rem;color:var(--ink-dim);}
+  .color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.7rem;}
+  .color-field{display:flex;align-items:center;gap:.5rem;}
+  .color-field input[type=color]{
+    width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer;flex-shrink:0;
+  }
+  .color-field span{font-size:.8rem;color:var(--ink-dim);}
+  .slider-row{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.9rem;}
+  .slider-row:last-child{margin-bottom:0;}
+  .slider-row label{font-size:.82rem;color:var(--ink-dim);display:flex;justify-content:space-between;}
+  .slider-row input[type=range]{width:100%;accent-color:var(--sage);}
+  .font-upload-row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+  .font-upload-btn{
+    padding:.5rem 1rem;border-radius:999px;border:1px solid var(--line);background:transparent;
+    color:var(--ink-dim);font-size:.85rem;cursor:pointer;
+  }
+  .font-upload-btn:hover{border-color:var(--sage-dim);}
+  .font-upload-name{font-size:.8rem;color:var(--ink-dim);font-style:italic;}
+
+  /* ---- mídias ---- */
+  .media-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+  .media-tab{
+    padding:.45rem .8rem;border-radius:999px;border:1px solid var(--line);
+    background:transparent;color:var(--ink-dim);font-size:.85rem;cursor:pointer;
+    display:flex;align-items:center;gap:.45rem;font-family:var(--font-body);
+  }
+  .media-tab:hover{border-color:var(--sage-dim);}
+  .media-tab.selected{background:var(--sage-dim);border-color:var(--sage-dim);color:#f7ecd6;}
+  .media-tab-del{opacity:.55;font-size:.8rem;}
+  .media-tab-del:hover{opacity:1;}
+  .media-tab-add{
+    width:34px;height:34px;border-radius:999px;border:1px dashed var(--line);
+    background:transparent;color:var(--ink-dim);cursor:pointer;font-size:1.1rem;line-height:1;
+  }
+  .media-tab-add:hover{border-color:var(--sage-dim);color:var(--sage);}
+  .media-add-cat-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+  .media-add-cat-row input{
+    flex:1;min-width:180px;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-family:var(--font-body);font-size:.9rem;
+  }
+  .media-table-wrap{overflow-x:auto;}
+  .media-table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px;}
+  .media-table th{
+    text-align:left;color:var(--ink-dim);font-weight:500;font-size:.74rem;
+    text-transform:uppercase;letter-spacing:.04em;padding:.4rem .5rem;border-bottom:1px solid var(--line);
+  }
+  .media-table td{padding:.4rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .media-title-input, .media-date-input, .media-status-select{
+    width:100%;border:1px solid transparent;background:transparent;color:var(--ink);
+    font-family:var(--font-body);font-size:.88rem;padding:.3rem .35rem;border-radius:6px;
+  }
+  .media-title-input:hover, .media-date-input:hover, .media-status-select:hover,
+  .media-title-input:focus, .media-date-input:focus, .media-status-select:focus{
+    border-color:var(--line);background:var(--card-2);outline:none;
+  }
+  .star-rating{display:flex;gap:0;}
+  .star-rating button{
+    background:none;border:none;cursor:pointer;font-size:1.05rem;color:var(--line);padding:0 1px;line-height:1;
+  }
+  .star-rating button.filled{color:var(--gold);}
+  .media-del-btn{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:1rem;}
+  .media-del-btn:hover{color:var(--clay);}
+  .media-empty{color:var(--ink-dim);font-style:italic;font-size:.9rem;padding:1rem 0;}
+  .media-add-row-btn{margin-top:1rem;}
+  .decor-layer{
+    position:fixed;inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:5;
+  }
+  .decor-particle{
+    position:absolute;
+    top:-10%;
+    will-change:transform;
+    animation-name:decorFall;
+    animation-timing-function:linear;
+    animation-iteration-count:infinite;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));
+  }
+  @keyframes decorFall{
+    0%{transform:translateY(0) translateX(0) rotate(0deg);}
+    50%{transform:translateY(57vh) translateX(18px) rotate(180deg);}
+    100%{transform:translateY(115vh) translateX(-10px) rotate(360deg);}
+  }
+
+  @media (max-width:520px){
+    .wrap{padding:1.6rem 1rem 3rem;}
+    .dial{width:150px;height:150px;}
+    .dial-node{width:56px;height:56px;margin-left:-28px;margin-top:-28px;}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+<body>
+<div class="texture-layer" id="textureLayer"></div>
+<div class="decor-layer" id="decorLayer"></div>
+<div class="wrap" id="mainWrap">
+
+  <header class="top">
+    <h1>Diário</h1>
+    <svg class="flourish" viewBox="0 0 200 20" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 10 Q40 -4 70 10 Q85 18 100 10 Q115 2 130 10 Q160 24 200 10" stroke="#7a2e2e" stroke-width="1" fill="none"/>
+      <circle cx="100" cy="10" r="2.4" fill="#7a2e2e"/>
+    </svg>
+    <p>Um só lugar para todas as formas de guardar um dia — e todas as formas de reencontrá-lo.</p>
+  </header>
+
+  <div class="install-banner" id="installBanner" style="display:none;">
+    <span class="install-banner-text" id="installBannerText">Instale o Diário na tela inicial para abrir como um app.</span>
+    <button type="button" class="mood-edit-btn" id="installBannerBtn">instalar</button>
+    <button type="button" class="install-banner-dismiss" id="installBannerDismiss" title="dispensar">✕</button>
+  </div>
+
+  <section class="panel">
+    <h2 class="sec-title">Personalizar</h2>
+    <div class="customize-group">
+      <p class="customize-label">Cores da página</p>
+      <div class="swatch-row" id="themeSwatches"></div>
+    </div>
+    <div class="customize-group">
+      <p class="customize-label">Fonte do texto</p>
+      <div class="font-row" id="fontButtons"></div>
+    </div>
+    <div class="customize-group">
+      <p class="customize-label">Tamanho da fonte</p>
+      <div class="size-row" id="sizeButtons"></div>
+    </div>
+    <div class="customize-group">
+      <p class="customize-label">Desenhos flutuantes</p>
+      <div class="decor-row" id="decorButtons"></div>
+      <div class="font-upload-row" style="margin-top:.6rem;">
+        <input type="text" id="customDecorInput" placeholder="ou digite seus próprios símbolos, ex: 🌙 ✨ 🦋" style="flex:1;min-width:200px;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-family:var(--font-body);font-size:.9rem;">
+        <button class="font-upload-btn" id="customDecorBtn">Aplicar</button>
+      </div>
+    </div>
+
+    <div class="customize-group">
+      <p class="customize-label">Personalização avançada</p>
+
+      <div class="deep-toggle-row">
+        <button class="deep-toggle" id="customColorToggle"></button>
+        <span class="deep-toggle-label">Usar cores personalizadas (em vez do tema acima)</span>
+      </div>
+      <div class="color-grid" id="customColorGrid" style="display:none;margin-bottom:1rem;">
+        <div class="color-field"><input type="color" id="colorBg"><span>Fundo</span></div>
+        <div class="color-field"><input type="color" id="colorCard"><span>Cartões</span></div>
+        <div class="color-field"><input type="color" id="colorInk"><span>Texto</span></div>
+        <div class="color-field"><input type="color" id="colorAccent"><span>Destaque</span></div>
+      </div>
+
+      <div class="slider-row">
+        <label>Cantos arredondados <span id="radiusVal"></span></label>
+        <input type="range" id="radiusSlider" min="0" max="28" step="1">
+      </div>
+      <div class="slider-row">
+        <label>Espaçamento entre linhas <span id="lineHeightVal"></span></label>
+        <input type="range" id="lineHeightSlider" min="1.2" max="2.2" step="0.05">
+      </div>
+      <div class="slider-row">
+        <label>Espaçamento entre letras <span id="letterSpacingVal"></span></label>
+        <input type="range" id="letterSpacingSlider" min="-0.5" max="2.5" step="0.1">
+      </div>
+
+      <div class="deep-toggle-row">
+        <button class="deep-toggle" id="textureToggle"></button>
+        <span class="deep-toggle-label">Textura de papel no fundo</span>
+      </div>
+
+      <div class="font-upload-row">
+        <button class="font-upload-btn" id="fontUploadBtn">Carregar fonte própria (.ttf/.otf/.woff)</button>
+        <input type="file" id="fontUploadInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;">
+        <span class="deep-toggle-label" id="customFontStatus"></span>
+      </div>
+
+      <button class="font-upload-btn" id="resetDeepBtn" style="margin-top:.9rem;">Restaurar padrões avançados</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="sec-title">Guardar</h2>
+    <div class="field-row" style="margin-top:0;margin-bottom:1rem;">
+      <input type="text" id="tituloInput" placeholder="Título (opcional)">
+      <input type="text" id="subtituloInput" placeholder="Subtítulo (opcional)">
+    </div>
+    <div class="mode-tabs" id="modeTabs"></div>
+    <div id="modeContent"></div>
+    <div class="mood-quick-row" id="moodQuickRow">
+      <span class="mood-quick-label">Humor do dia <button type="button" class="mood-edit-btn" id="moodEditBtn">✎ personalizar ícones</button></span>
+      <div class="mood-quick-chips" id="moodQuickChips"></div>
+    </div>
+    <div class="mood-editor" id="moodEditor" style="display:none;">
+      <p class="mood-editor-hint">Troque cada humor por um emoji do seu gosto ou envie uma figurinha (imagem pequena).</p>
+      <div id="moodEditorRows"></div>
+    </div>
+    <div class="quick-tags-row">
+      <span class="quick-tags-label">temas rápidos:</span>
+      <div class="quick-tags" id="quickTags"></div>
+    </div>
+    <div class="save-row">
+      <input type="text" id="tagsInput" placeholder="tags, separadas, por vírgula" style="max-width:280px;">
+      <div style="display:flex;align-items:center;gap:.8rem;">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="save-btn" id="saveBtn">Guardar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="relembrarPanel">
+    <h2 class="sec-title">Relembrar <span class="search-shortcut-hint">— aperte "/" a qualquer momento para buscar</span></h2>
+    <div class="dial-wrap">
+      <div class="dial" id="dial">
+        <div class="center" id="dialCenter">linha do<br>tempo</div>
+      </div>
+      <div class="dial-legend" id="dialLegend">
+        <b>Linha do tempo</b> — tudo o que foi guardado, do mais recente ao mais antigo.
+      </div>
+    </div>
+    <div id="recallContent"></div>
+  </section>
+
+  <section class="panel" id="mediaPanel">
+    <h2 class="sec-title">Mídias</h2>
+    <p class="export-desc">Livros, filmes, séries, jogos — bases separadas para cada tipo, com nota, datas e status.</p>
+    <div class="media-tabs" id="mediaTabs"></div>
+    <div id="mediaAddCatRow" class="media-add-cat-row" style="display:none;">
+      <input type="text" id="mediaNewCatInput" placeholder="Nome da nova categoria, ex: Podcasts">
+      <button class="save-btn" id="mediaNewCatConfirm">Criar</button>
+      <button class="font-upload-btn" id="mediaNewCatCancel">Cancelar</button>
+    </div>
+    <div class="media-table-wrap">
+      <table class="media-table" id="mediaTable">
+        <thead>
+          <tr><th>Título</th><th>Nota</th><th>Início</th><th>Término</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="mediaTableBody"></tbody>
+      </table>
+    </div>
+    <p class="media-empty" id="mediaEmptyMsg" style="display:none;"></p>
+    <button class="save-btn media-add-row-btn" id="mediaAddItemBtn">+ Novo item</button>
+  </section>
+
+  <section class="panel" id="exportPanel">
+    <h2 class="sec-title">Exportar</h2>
+    <p class="export-desc">Guarde uma cópia do seu diário fora daqui.</p>
+    <div class="export-row">
+      <button class="export-btn" id="exportTxtBtn">
+        <span class="export-ic">✎</span>
+        <span class="export-txt"><b>Como texto</b><small>arquivo .txt, fácil de ler</small></span>
+      </button>
+      <button class="export-btn" id="exportPdfBtn">
+        <span class="export-ic">🖶</span>
+        <span class="export-txt"><b>Como PDF</b><small>abre a impressão do navegador</small></span>
+      </button>
+      <button class="export-btn" id="exportJsonBtn">
+        <span class="export-ic">⇩</span>
+        <span class="export-txt"><b>Backup completo</b><small>arquivo .json, para restaurar depois</small></span>
+      </button>
+    </div>
+    <p class="export-desc" style="margin:1rem 0 .6rem;">Para Notion, Google Docs, Obsidian e afins</p>
+    <div class="export-row">
+      <button class="export-btn" id="exportMdBtn">
+        <span class="export-ic">▤</span>
+        <span class="export-txt"><b>Markdown (.md)</b><small>importe direto no Notion, Obsidian, Docs</small></span>
+      </button>
+      <button class="export-btn" id="exportCopyBtn">
+        <span class="export-ic">⧉</span>
+        <span class="export-txt"><b>Copiar para colar</b><small>cole no Notion e ele formata sozinho</small></span>
+      </button>
+    </div>
+    <p class="export-desc" style="margin:1rem 0 .6rem;">Portabilidade profunda</p>
+    <div class="export-row">
+      <button class="export-btn" id="exportZipBtn">
+        <span class="export-ic">🗂</span>
+        <span class="export-txt"><b>Pasta de notas (.zip)</b><small>1 arquivo .md por entrada, com metadados — arraste a pasta pro Obsidian, Logseq, AppFlowy...</small></span>
+      </button>
+      <button class="export-btn" id="exportCsvBtn">
+        <span class="export-ic">▦</span>
+        <span class="export-txt"><b>Planilha (.csv)</b><small>abre no Excel, Sheets, Airtable...</small></span>
+      </button>
+    </div>
+    <p class="export-desc" style="font-size:.8rem;margin:.4rem 0 0;">
+      Este diário roda só no seu navegador, sem login — por isso não faz upload direto para a nuvem. Os formatos acima são a forma de levar o conteúdo até lá.
+    </p>
+    <span class="save-status" id="exportStatus"></span>
+  </section>
+
+  <section class="panel" id="importPanel">
+    <h2 class="sec-title">Importar</h2>
+    <p class="export-desc">Traga de volta um backup, ou traga o diário para um dispositivo novo.</p>
+    <div class="export-row">
+      <button class="export-btn" id="importJsonBtn" style="flex:0 1 auto;min-width:220px;">
+        <span class="export-ic">⇧</span>
+        <span class="export-txt"><b>Importar backup (.json)</b><small>adiciona as entradas que ainda não existem aqui</small></span>
+      </button>
+    </div>
+    <input type="file" id="importJsonInput" accept="application/json,.json" style="display:none;">
+    <p class="export-desc" style="font-size:.8rem;margin:.7rem 0 0;">
+      A importação nunca apaga o que já está aqui — ela só acrescenta entradas do backup que ainda não existem neste diário (comparando por identificador). Se o backup tiver senha de criptografia diferente da atual, as entradas vêm sem cifra extra, só a proteção deste diário se estiver ativa.
+    </p>
+    <span class="save-status" id="importStatus"></span>
+  </section>
+
+  <section class="panel" id="folderSyncPanel">
+    <h2 class="sec-title">Salvar no computador</h2>
+    <div id="folderSyncUnsupported" style="display:none;">
+      <p class="export-desc">
+        Seu navegador não permite gravar arquivos direto numa pasta (esse recurso existe no Chrome e no Edge). Use os botões de "Exportar" acima para baixar cópias manualmente.
+      </p>
+    </div>
+    <div id="folderSyncSupported" style="display:none;">
+      <p class="export-desc">
+        Escolha uma pasta no seu computador. Cada entrada vira um arquivo <code>.md</code> nela — um diário de verdade em texto puro, fora do navegador, que você pode abrir com qualquer editor ou sincronizar do jeito que quiser.
+      </p>
+      <p id="folderCryptoWarning" style="display:none;font-size:.82rem;color:var(--clay);background:var(--card-2);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem;margin:0 0 1rem;">
+        ⚠ A criptografia está ativada, mas isso protege só o que fica salvo aqui dentro do diário. Os arquivos <code>.md</code> gravados nesta pasta ficam em texto puro — é assim que Notion, Obsidian e editores comuns conseguem lê-los. Se isso for um problema, deixe a sincronização de pasta desligada.
+      </p>
+      <div id="folderNotConnected">
+        <button class="save-btn" id="chooseFolderBtn">Escolher pasta</button>
+      </div>
+      <div id="folderConnected" style="display:none;">
+        <p style="font-size:.9rem;color:var(--ink);margin:0 0 .8rem;">📁 Pasta conectada: <b id="folderNameLabel"></b></p>
+        <div class="deep-toggle-row">
+          <button class="deep-toggle" id="autoSyncToggle"></button>
+          <span class="deep-toggle-label">Gravar automaticamente a cada entrada nova</span>
+        </div>
+        <div class="export-row">
+          <button class="export-btn" id="syncNowBtn" style="flex:0 1 auto;min-width:170px;">
+            <span class="export-ic">⟳</span>
+            <span class="export-txt"><b>Sincronizar agora</b><small>grava tudo que faltar na pasta</small></span>
+          </button>
+          <button class="export-btn" id="changeFolderBtn" style="flex:0 1 auto;min-width:170px;">
+            <span class="export-ic">📁</span>
+            <span class="export-txt"><b>Trocar pasta</b><small>escolher outro lugar</small></span>
+          </button>
+        </div>
+      </div>
+      <div id="folderReconnect" style="display:none;">
+        <p style="font-size:.9rem;color:var(--ink-dim);margin:0 0 .7rem;">Pasta salva anteriormente: <b id="folderPendingLabel"></b> — o navegador pede para confirmar de novo a cada sessão.</p>
+        <button class="save-btn" id="reconnectFolderBtn">Reconectar pasta</button>
+      </div>
+    </div>
+    <span class="save-status" id="folderStatus"></span>
+  </section>
+
+  <section class="panel" id="securityPanel">
+    <h2 class="sec-title">Segurança</h2>
+    <div id="securityOff">
+      <p class="export-desc">O diário fica salvo sem proteção — qualquer pessoa com acesso ao armazenamento consegue ler o texto puro.</p>
+      <p style="font-size:.85rem;color:var(--ink-dim);margin:0 0 1rem;">
+        Ativar a criptografia protege tudo com uma senha só sua. O texto passa a ser salvo cifrado (AES-256), e sem a senha ninguém consegue ler — nem eu.
+        <b>Se você esquecer a senha, o conteúdo não tem como ser recuperado</b> — é assim que a proteção funciona.
+      </p>
+      <button class="save-btn" id="enableCryptoBtn">Ativar criptografia</button>
+    </div>
+    <div id="securityOn" style="display:none;">
+      <p class="export-desc" style="font-style:normal;">🔒 <b style="color:var(--ink);">Criptografia ativada.</b> Seus textos ficam cifrados no armazenamento.</p>
+      <div class="export-row" style="margin-top:.8rem;">
+        <button class="export-btn" id="lockNowBtn" style="flex:0 1 auto;min-width:150px;">
+          <span class="export-ic">🔒</span>
+          <span class="export-txt"><b>Bloquear agora</b><small>pede a senha de novo</small></span>
+        </button>
+        <button class="export-btn" id="changePassBtn" style="flex:0 1 auto;min-width:150px;">
+          <span class="export-ic">⟳</span>
+          <span class="export-txt"><b>Trocar senha</b><small>recifra tudo com a nova</small></span>
+        </button>
+        <button class="export-btn" id="disableCryptoBtn" style="flex:0 1 auto;min-width:150px;">
+          <span class="export-ic">✕</span>
+          <span class="export-txt"><b>Desativar</b><small>volta a salvar sem cifra</small></span>
+        </button>
+      </div>
+    </div>
+    <span class="save-status" id="securityStatus"></span>
+  </section>
+
+  <div id="printArea"></div>
+
+</div>
+
+<div class="lock-overlay" id="lockOverlay" style="display:none;">
+  <div class="lock-card">
+    <h2>🔒 Diário protegido</h2>
+    <p id="lockPrompt">Digite sua senha para abrir o diário.</p>
+    <input type="password" id="lockPassInput" placeholder="Senha" autocomplete="current-password">
+    <input type="password" id="lockPassInput2" placeholder="Confirme a senha" style="display:none;">
+    <button class="save-btn" id="lockSubmitBtn" style="width:100%;margin-top:.8rem;">Entrar</button>
+    <p class="lock-error" id="lockError"></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'diario:entries';
+  const CRYPTO_META_KEY = 'diario:crypto-meta';
+
+  /* ---- camada de armazenamento (funciona offline / fora do Claude.ai) ----
+     Usa window.storage quando disponível (dentro do Claude.ai). Se não existir
+     — por exemplo quando este arquivo é aberto direto no navegador, sem
+     internet — cai automaticamente para localStorage, que é local ao
+     computador e não depende de rede nenhuma. */
+  const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage);
+  const dstore = {
+    async get(key){
+      if(hasCloudStorage){
+        try{ return await window.storage.get(key, false); }
+        catch(e){ return null; }
+      }
+      const v = localStorage.getItem(key);
+      return v===null ? null : { key, value:v, shared:false };
+    },
+    async set(key, value){
+      if(hasCloudStorage){
+        try{ return await window.storage.set(key, value, false); }
+        catch(e){ return null; }
+      }
+      try{ localStorage.setItem(key, value); return {key, value, shared:false}; }
+      catch(e){ return null; }
+    },
+    async delete(key){
+      if(hasCloudStorage){
+        try{ return await window.storage.delete(key, false); }
+        catch(e){ return null; }
+      }
+      try{ localStorage.removeItem(key); return {key, deleted:true, shared:false}; }
+      catch(e){ return null; }
+    }
+  };
+
+  /* ---- criptografia (AES-256-GCM, chave derivada da senha via PBKDF2) ---- */
+  let cryptoKey = null;      // CryptoKey em memória, só durante a sessão desbloqueada
+  let cryptoEnabled = false; // se há proteção configurada neste diário
+
+  function b64enc(bytes){ return btoa(String.fromCharCode(...new Uint8Array(bytes))); }
+  function b64dec(str){ return Uint8Array.from(atob(str), c=>c.charCodeAt(0)); }
+
+  async function deriveKey(password, saltBytes){
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt:saltBytes, iterations:180000, hash:'SHA-256' },
+      baseKey,
+      { name:'AES-GCM', length:256 },
+      false,
+      ['encrypt','decrypt']
+    );
+  }
+
+  async function encryptString(key, plaintext){
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder();
+    const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plaintext));
+    return { iv: b64enc(iv), ct: b64enc(ct) };
+  }
+
+  async function decryptString(key, payload){
+    const iv = b64dec(payload.iv);
+    const ct = b64dec(payload.ct);
+    const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+    return new TextDecoder().decode(dec);
+  }
+
+  async function getCryptoMeta(){
+    try{
+      const res = await dstore.get(CRYPTO_META_KEY);
+      return res && res.value ? JSON.parse(res.value) : null;
+    }catch(e){ return null; }
+  }
+
+  async function setCryptoMeta(meta){
+    await dstore.set(CRYPTO_META_KEY, JSON.stringify(meta));
+  }
+
+  async function deleteCryptoMeta(){
+    try{ await dstore.delete(CRYPTO_META_KEY); }catch(e){}
+  }
+
+  let entries = [];
+  let currentMode = 'texto';
+  let currentRecall = 'timeline';
+  let calDate = new Date();
+  let calSelected = null;
+  let randomIdx = null;
+  let tagFilter = null;
+
+  const moods = [
+    {id:'radiante', em:'☀', label:'radiante'},
+    {id:'leve', em:'〜', label:'leve'},
+    {id:'neutro', em:'•', label:'neutro'},
+    {id:'cansado', em:'☾', label:'cansado'},
+    {id:'pesado', em:'⌁', label:'pesado'},
+  ];
+  let selectedMood = null;
+  let pendingPhoto = null;
+  let currentPrompt = null;
+
+  const situationPrompts = [
+    'Qual foi a situação de hoje que mais ficou na sua cabeça? O que aconteceu, exatamente?',
+    'Teve algum momento em que você reagiu de um jeito que te surpreendeu? O que você acha que estava por trás disso?',
+    'O que você gostaria de ter dito hoje, mas não disse? O que te segurou?',
+    'Qual foi a decisão mais difícil que você tomou hoje? Se pudesse voltar atrás, mudaria algo?',
+    'Alguém te fez sentir bem hoje? O que essa pessoa fez ou disse?',
+    'Existe alguma situação de hoje que ainda está te incomodando? Do que se trata?',
+    'Se pudesse reviver um momento de hoje e agir diferente, qual seria e o que você faria?',
+    'Qual foi o momento em que você se sentiu mais você mesmo hoje?',
+    'Teve algo que te tirou do sério hoje? Como você lidou com isso, e como gostaria de ter lidado?',
+    'O que uma situação de hoje te ensinou sobre você mesmo?',
+    'Qual conversa de hoje você ainda está processando? O que ficou sem resposta?',
+    'Em que momento do dia você se sentiu mais em paz? O que estava acontecendo ao redor?',
+    'Teve algum conflito hoje, grande ou pequeno? O que você acha que cada lado queria, de verdade?',
+    'O que você evitou fazer ou encarar hoje? Por quê?',
+    'Se essa situação de hoje fosse contada por outra pessoa envolvida, o que ela diria de diferente?',
+  ];
+
+  const modes = [
+    {id:'texto', label:'Texto livre'},
+    {id:'perguntas', label:'Perguntas guiadas'},
+    {id:'humor', label:'Humor rápido'},
+    {id:'gratidao', label:'Gratidão'},
+    {id:'foto', label:'Foto'},
+  ];
+
+  const recallModes = [
+    {id:'timeline', ic:'☰', label:'Linha do tempo', desc:'tudo o que foi guardado, do mais recente ao mais antigo.'},
+    {id:'calendario', ic:'▦', label:'Calendário', desc:'navegue por mês e veja em quais dias você escreveu.'},
+    {id:'busca', ic:'⌕', label:'Busca', desc:'encontre entradas por palavra ou por tag.'},
+    {id:'nestedia', ic:'◐', label:'Neste dia', desc:'o que você guardou em outros anos, exatamente hoje.'},
+    {id:'aleatorio', ic:'⟲', label:'Aleatório', desc:'uma lembrança sorteada ao acaso, para reencontrar por acidente.'},
+    {id:'organizar', ic:'⊞', label:'Organizar', desc:'tudo agrupado por título, subtítulo, dia, mês e ano.'},
+    {id:'etiquetas', ic:'#', label:'Etiquetas', desc:'separe por tema: trabalho, viagens, sentimentos e mais.'},
+  ];
+
+  const themes = [
+    {id:'classico', label:'Clássico', bg:'#e8dcc0', panel:'#f3e9d2', card:'#f8f0dc', card2:'#efe1bf', ink:'#4a3524', inkDim:'#8a7455', line:'#c9b287', sage:'#7a2e2e', sageDim:'#8f3a3a', gold:'#8c6a2f', goldDim:'#a68847', clay:'#a13d2e'},
+    {id:'jardim', label:'Jardim', bg:'#e3ead9', panel:'#eef3e6', card:'#f5f8ef', card2:'#e2ecd6', ink:'#33422b', inkDim:'#748064', line:'#b9c9a4', sage:'#3f6b3a', sageDim:'#4d7d47', gold:'#8a7a2f', goldDim:'#a3922f', clay:'#7a5b2e'},
+    {id:'lavanda', label:'Lavanda', bg:'#e6e0ee', panel:'#efe9f5', card:'#f6f1fa', card2:'#e3d9ef', ink:'#3f3350', inkDim:'#7c6f8f', line:'#c6b8db', sage:'#5c4082', sageDim:'#6d4f96', gold:'#8c6a9e', goldDim:'#a084b4', clay:'#7a4a8a'},
+    {id:'noite', label:'Noite', bg:'#1c1a22', panel:'#25222e', card:'#2c2938', card2:'#332f40', ink:'#e6dfef', inkDim:'#9b93ab', line:'#4a4358', sage:'#a98fd1', sageDim:'#8f74bd', gold:'#d4b869', goldDim:'#c2a85a', clay:'#c2786a'},
+    {id:'rosa', label:'Rosa antigo', bg:'#f1dfd8', panel:'#f6e9e3', card:'#faf0ec', card2:'#eeddd3', ink:'#5a3730', inkDim:'#9a7a70', line:'#dcb9ab', sage:'#a3495a', sageDim:'#b25c6c', gold:'#b3763f', goldDim:'#c48c54', clay:'#a3453a'},
+    {id:'oceano', label:'Oceano', bg:'#dce8ea', panel:'#e5eff0', card:'#eff7f8', card2:'#d3e4e6', ink:'#1f3a3f', inkDim:'#5f7d82', line:'#a9c8cc', sage:'#1f6b73', sageDim:'#2a7d85', gold:'#b08968', goldDim:'#c29b7a', clay:'#2a5d63'},
+    {id:'terracota', label:'Terracota', bg:'#ecd9c4', panel:'#f2e2ce', card:'#f8ecdc', card2:'#e8d0b3', ink:'#5c3a24', inkDim:'#97785c', line:'#d7b98e', sage:'#b5562e', sageDim:'#c66a3f', gold:'#96662f', goldDim:'#ad7d40', clay:'#8a4020'},
+    {id:'menta', label:'Menta', bg:'#dcede4', panel:'#e7f3ec', card:'#f2f9f4', card2:'#cfe6da', ink:'#234034', inkDim:'#5f8172', line:'#a9d0bd', sage:'#2f7d5c', sageDim:'#38916b', gold:'#8a9a4f', goldDim:'#a1b364', clay:'#276b52'},
+    {id:'vinho', label:'Vinho', bg:'#ecdcdd', panel:'#f2e5e6', card:'#f8eff0', card2:'#e3c9cb', ink:'#4a1f26', inkDim:'#8a5c62', line:'#d3a8ac', sage:'#7a1f30', sageDim:'#8f2c3e', gold:'#9e6a3a', goldDim:'#b3824c', clay:'#6b1826'},
+    {id:'ardosia', label:'Ardósia', bg:'#dfe1e6', panel:'#e8eaee', card:'#f2f4f7', card2:'#ccd1d9', ink:'#2b303b', inkDim:'#6b7280', line:'#b3bac6', sage:'#445068', sageDim:'#53617d', gold:'#8c7a54', goldDim:'#a2906a', clay:'#384260'},
+    {id:'aurora', label:'Aurora', bg:'#f5e2d6', panel:'#faebe0', card:'#fdf3ea', card2:'#f0d5c2', ink:'#5c3a2e', inkDim:'#9c7a68', line:'#e0bfa8', sage:'#c05a3f', sageDim:'#d16e52', gold:'#c98a3f', goldDim:'#dba055', clay:'#a8452e'},
+    {id:'cobalto', label:'Cobalto', bg:'#d8e0ee', panel:'#e3e9f3', card:'#eef2f9', card2:'#c5d2e6', ink:'#1f2b46', inkDim:'#5c6d8c', line:'#a8bcdb', sage:'#2c4a8c', sageDim:'#3a5aa0', gold:'#8c9dc2', goldDim:'#a2b1d1', clay:'#1c3566'},
+    {id:'mostarda', label:'Mostarda', bg:'#ece0c4', panel:'#f2e9cf', card:'#f8f1de', card2:'#e6d5a5', ink:'#4a3b1a', inkDim:'#8a7548', line:'#d3bb75', sage:'#a67c1e', sageDim:'#bd8f2a', gold:'#8f6a2a', goldDim:'#a67f3a', clay:'#7a5613'},
+    {id:'ameixa', label:'Ameixa', bg:'#e6d6dd', panel:'#eee0e6', card:'#f6ecf0', card2:'#dcc0cb', ink:'#3f1f30', inkDim:'#7d5c6c', line:'#c9a3b3', sage:'#7a2f56', sageDim:'#8f3d66', gold:'#a3703f', goldDim:'#b8854f', clay:'#5c1a3a'},
+    {id:'grafite', label:'Grafite', bg:'#e2e2e0', panel:'#eaeae8', card:'#f4f4f2', card2:'#c9c9c6', ink:'#2a2a28', inkDim:'#6b6b68', line:'#b5b5b1', sage:'#4a4a48', sageDim:'#5c5c59', gold:'#8a7d5a', goldDim:'#a3936a', clay:'#3a3a38'},
+    {id:'coral', label:'Coral', bg:'#f7ddd3', panel:'#fae7de', card:'#fdf1ea', card2:'#f0c3b0', ink:'#5c2e1f', inkDim:'#9c7060', line:'#e3ab93', sage:'#d9603d', sageDim:'#e37650', gold:'#3a8f8a', goldDim:'#4aa39d', clay:'#b3401f'},
+  ];
+
+  const fonts = [
+    {id:'cormorant', label:'Cormorant', family:"'Cormorant Garamond',serif"},
+    {id:'lora', label:'Lora', family:"'Lora',serif"},
+    {id:'garamond', label:'Garamond', family:"'EB Garamond',serif"},
+    {id:'poppins', label:'Poppins', family:"'Poppins',sans-serif"},
+    {id:'caveat', label:'Manuscrita', family:"'Caveat',cursive"},
+    {id:'dancing', label:'Cursiva', family:"'Dancing Script',cursive"},
+    {id:'sacramento', label:'Cursiva fina', family:"'Sacramento',cursive"},
+    {id:'greatvibes', label:'Cursiva elegante', family:"'Great Vibes',cursive"},
+  ];
+
+  const fontSizes = [
+    {id:'pequena', label:'Diário', size:'16px'},
+    {id:'media', label:'Diário', size:'18px'},
+    {id:'grande', label:'Diário', size:'21px'},
+    {id:'extra', label:'Diário', size:'24px'},
+  ];
+
+  const decorTypes = [
+    {id:'nenhum', label:'Nenhum', symbols:[]},
+    {id:'folhas', label:'Folhas', symbols:['🍂','🍁','🍃']},
+    {id:'coracoes', label:'Corações', symbols:['💕','❤','💗']},
+    {id:'estrelas', label:'Estrelas', symbols:['✨','⭐','✦']},
+    {id:'neve', label:'Neve', symbols:['❄','❅','❆']},
+  ];
+
+  let settings = {
+    theme:'classico', font:'cormorant', decor:'nenhum', fontSize:'media',
+    customColorsOn:false,
+    customColors:{ bg:'#e8dcc0', card:'#f8f0dc', ink:'#4a3524', accent:'#7a2e2e' },
+    radius:3, lineHeight:1.6, letterSpacing:0, texture:true,
+    customFont:null, customDecorSymbols:null,
+    customMoodIcons:{},
+    cycle:{ enabled:false, avgCycleLength:28, avgPeriodLength:5, periodStarts:[], temperatures:{}, tempUnit:'c' },
+    contraceptives:[],
+  };
+
+  /* ---- utilidades de cor (para gerar paleta a partir de cores personalizadas) ---- */
+  function hexToRgb(hex){
+    hex = (hex||'#000000').replace('#','');
+    if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+    const num = parseInt(hex,16) || 0;
+    return {r:(num>>16)&255, g:(num>>8)&255, b:num&255};
+  }
+  function rgbToHex(r,g,b){
+    return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+  }
+  function shade(hex, amt){
+    const {r,g,b} = hexToRgb(hex);
+    const t = amt<0 ? 0 : 255;
+    const p = Math.abs(amt);
+    return rgbToHex(r+(t-r)*p, g+(t-g)*p, b+(t-b)*p);
+  }
+  function mixHex(hexA, hexB, amt){
+    const a=hexToRgb(hexA), b=hexToRgb(hexB);
+    return rgbToHex(a.r+(b.r-a.r)*amt, a.g+(b.g-a.g)*amt, a.b+(b.b-a.b)*amt);
+  }
+
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+  async function loadEntries(){
+    try{
+      const res = await dstore.get(STORAGE_KEY);
+      if(!res || !res.value){ entries = []; }
+      else if(cryptoEnabled && cryptoKey){
+        const payload = JSON.parse(res.value);
+        entries = payload.ct ? JSON.parse(await decryptString(cryptoKey, payload)) : [];
+      } else {
+        entries = JSON.parse(res.value);
+      }
+    }catch(e){
+      entries = [];
+    }
+    renderRecall();
+  }
+
+  async function persist(){
+    try{
+      if(cryptoEnabled && cryptoKey){
+        const payload = await encryptString(cryptoKey, JSON.stringify(entries));
+        await dstore.set(STORAGE_KEY, JSON.stringify(payload));
+      } else {
+        await dstore.set(STORAGE_KEY, JSON.stringify(entries));
+      }
+    }catch(e){
+      console.error('Falha ao guardar', e);
+    }
+  }
+
+  // ---------- personalização ----------
+  function applyTheme(themeId){
+    const t = themes.find(x=>x.id===themeId) || themes[0];
+    const root = document.documentElement.style;
+    root.setProperty('--bg', t.bg);
+    root.setProperty('--panel', t.panel);
+    root.setProperty('--card', t.card);
+    root.setProperty('--card-2', t.card2);
+    root.setProperty('--ink', t.ink);
+    root.setProperty('--ink-dim', t.inkDim);
+    root.setProperty('--line', t.line);
+    root.setProperty('--sage', t.sage);
+    root.setProperty('--sage-dim', t.sageDim);
+    root.setProperty('--gold', t.gold);
+    root.setProperty('--gold-dim', t.goldDim);
+    root.setProperty('--clay', t.clay);
+  }
+
+  function applyCustomColors(){
+    const c = settings.customColors;
+    const root = document.documentElement.style;
+    root.setProperty('--bg', c.bg);
+    root.setProperty('--panel', shade(c.bg, 0.35));
+    root.setProperty('--card', c.card);
+    root.setProperty('--card-2', shade(c.card, -0.12));
+    root.setProperty('--ink', c.ink);
+    root.setProperty('--ink-dim', mixHex(c.ink, c.bg, 0.45));
+    root.setProperty('--line', mixHex(c.bg, c.ink, 0.28));
+    root.setProperty('--sage', c.accent);
+    root.setProperty('--sage-dim', shade(c.accent, 0.12));
+    root.setProperty('--gold', mixHex(c.accent, c.ink, 0.35));
+    root.setProperty('--gold-dim', shade(mixHex(c.accent, c.ink, 0.35), 0.15));
+    root.setProperty('--clay', shade(c.accent, -0.15));
+  }
+
+  function applyColors(){
+    if(settings.customColorsOn) applyCustomColors();
+    else applyTheme(settings.theme);
+  }
+
+  function applyDeepVisuals(){
+    document.documentElement.style.setProperty('--radius', settings.radius+'px');
+    document.documentElement.style.setProperty('--line-height', settings.lineHeight);
+    document.documentElement.style.setProperty('--letter-spacing', settings.letterSpacing+'px');
+    const tex = document.getElementById('textureLayer');
+    if(tex) tex.style.display = settings.texture ? 'block' : 'none';
+  }
+
+  async function applyCustomFont(){
+    if(!settings.customFont) return;
+    try{
+      const face = new FontFace('DiarioCustomFont', `url(${settings.customFont.dataUrl})`);
+      await face.load();
+      document.fonts.add(face);
+    }catch(e){ console.error('Falha ao carregar fonte personalizada', e); }
+  }
+
+  function applyFont(fontId){
+    if(fontId==='custom' && settings.customFont){
+      document.documentElement.style.setProperty('--font-body', "'DiarioCustomFont', serif");
+      return;
+    }
+    const f = fonts.find(x=>x.id===fontId) || fonts[0];
+    document.documentElement.style.setProperty('--font-body', f.family);
+  }
+
+  function applyFontSize(sizeId){
+    const s = fontSizes.find(x=>x.id===sizeId) || fontSizes[1];
+    document.documentElement.style.setProperty('--font-size', s.size);
+  }
+
+  function applyDecor(decorId){
+    settings.decor = decorId;
+    const layer = document.getElementById('decorLayer');
+    layer.innerHTML = '';
+    let symbols;
+    if(decorId==='personalizado' && settings.customDecorSymbols && settings.customDecorSymbols.length){
+      symbols = settings.customDecorSymbols;
+    } else {
+      const d = decorTypes.find(x=>x.id===decorId);
+      symbols = d ? d.symbols : [];
+    }
+    if(!symbols.length) return;
+    const count = window.innerWidth < 600 ? 12 : 22;
+    for(let i=0;i<count;i++){
+      const span = document.createElement('span');
+      span.className = 'decor-particle';
+      span.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+      const duration = 9 + Math.random()*11;
+      span.style.left = (Math.random()*100)+'vw';
+      span.style.fontSize = (14 + Math.random()*14)+'px';
+      span.style.animationDuration = duration+'s';
+      span.style.animationDelay = (-Math.random()*duration)+'s';
+      span.style.opacity = (0.45 + Math.random()*0.5).toFixed(2);
+      layer.appendChild(span);
+    }
+  }
+
+  function renderCustomize(){
+    const swatchEl = document.getElementById('themeSwatches');
+    swatchEl.innerHTML = '';
+    themes.forEach(t=>{
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (t.id===settings.theme ? ' selected' : '');
+      b.title = t.label;
+      b.style.background = `linear-gradient(135deg, ${t.bg} 50%, ${t.sage} 50%)`;
+      b.onclick = ()=>{ settings.theme = t.id; settings.customColorsOn = false; applyColors(); saveSettings(); renderCustomize(); syncDeepControls(); };
+      swatchEl.appendChild(b);
+    });
+
+    const fontEl = document.getElementById('fontButtons');
+    fontEl.innerHTML = '';
+    fonts.forEach(f=>{
+      const b = document.createElement('button');
+      b.className = 'font-btn' + (f.id===settings.font ? ' selected' : '');
+      b.textContent = f.label;
+      b.style.fontFamily = f.family;
+      b.onclick = ()=>{ settings.font = f.id; applyFont(f.id); saveSettings(); renderCustomize(); };
+      fontEl.appendChild(b);
+    });
+
+    const sizeEl = document.getElementById('sizeButtons');
+    sizeEl.innerHTML = '';
+    fontSizes.forEach(s=>{
+      const b = document.createElement('button');
+      b.className = 'size-btn' + (s.id===settings.fontSize ? ' selected' : '');
+      b.title = s.id.charAt(0).toUpperCase()+s.id.slice(1);
+      b.textContent = s.label;
+      b.style.fontSize = s.size;
+      b.onclick = ()=>{ settings.fontSize = s.id; applyFontSize(s.id); saveSettings(); renderCustomize(); };
+      sizeEl.appendChild(b);
+    });
+
+    const decorEl = document.getElementById('decorButtons');
+    decorEl.innerHTML = '';
+    decorTypes.forEach(d=>{
+      const b = document.createElement('button');
+      b.className = 'decor-btn' + (d.id===settings.decor ? ' selected' : '');
+      b.textContent = (d.symbols[0] ? d.symbols[0]+' ' : '') + d.label;
+      b.onclick = ()=>{ applyDecor(d.id); saveSettings(); renderCustomize(); };
+      decorEl.appendChild(b);
+    });
+    if(settings.decor==='personalizado' && settings.customDecorSymbols && settings.customDecorSymbols.length){
+      const b = document.createElement('button');
+      b.className = 'decor-btn selected';
+      b.textContent = settings.customDecorSymbols.slice(0,3).join(' ') + ' Personalizado';
+      b.onclick = ()=>{ applyDecor('personalizado'); saveSettings(); renderCustomize(); };
+      decorEl.appendChild(b);
+      document.getElementById('customDecorInput').value = settings.customDecorSymbols.join(' ');
+    }
+  }
+
+  async function loadSettings(){
+    try{
+      const res = await dstore.get('diario:settings');
+      if(res && res.value) settings = Object.assign(settings, JSON.parse(res.value));
+    }catch(e){ /* usa os padrões */ }
+    if(!settings.cycle) settings.cycle = { enabled:false, avgCycleLength:28, avgPeriodLength:5, periodStarts:[] };
+    if(!settings.cycle.temperatures) settings.cycle.temperatures = {};
+    if(!settings.cycle.tempUnit) settings.cycle.tempUnit = 'c';
+    if(!settings.contraceptives) settings.contraceptives = [];
+    applyColors();
+    if(settings.customFont) await applyCustomFont();
+    applyFont(settings.font);
+    applyFontSize(settings.fontSize);
+    applyDecor(settings.decor);
+    applyDeepVisuals();
+    renderCustomize();
+    initDeepControls();
+    renderMoodQuickRow();
+  }
+
+  async function saveSettings(){
+    try{
+      await dstore.set('diario:settings', JSON.stringify(settings));
+    }catch(e){
+      console.error('Falha ao guardar preferências', e);
+    }
+  }
+
+  /* ---- controles de personalização avançada ---- */
+  let deepControlsBound = false;
+
+  function syncDeepControls(){
+    const colorToggle = document.getElementById('customColorToggle');
+    const grid = document.getElementById('customColorGrid');
+    colorToggle.classList.toggle('on', settings.customColorsOn);
+    grid.style.display = settings.customColorsOn ? 'grid' : 'none';
+    document.getElementById('colorBg').value = settings.customColors.bg;
+    document.getElementById('colorCard').value = settings.customColors.card;
+    document.getElementById('colorInk').value = settings.customColors.ink;
+    document.getElementById('colorAccent').value = settings.customColors.accent;
+
+    document.getElementById('radiusSlider').value = settings.radius;
+    document.getElementById('radiusVal').textContent = settings.radius+'px';
+    document.getElementById('lineHeightSlider').value = settings.lineHeight;
+    document.getElementById('lineHeightVal').textContent = Number(settings.lineHeight).toFixed(2);
+    document.getElementById('letterSpacingSlider').value = settings.letterSpacing;
+    document.getElementById('letterSpacingVal').textContent = Number(settings.letterSpacing).toFixed(1)+'px';
+
+    document.getElementById('textureToggle').classList.toggle('on', settings.texture);
+    document.getElementById('customFontStatus').textContent = settings.customFont ? 'Fonte: '+settings.customFont.name : '';
+  }
+
+  function initDeepControls(){
+    syncDeepControls();
+    if(deepControlsBound) return;
+    deepControlsBound = true;
+
+    document.getElementById('customColorToggle').onclick = ()=>{
+      settings.customColorsOn = !settings.customColorsOn;
+      applyColors(); saveSettings(); syncDeepControls();
+    };
+    ['Bg','Card','Ink','Accent'].forEach(key=>{
+      document.getElementById('color'+key).oninput = (e)=>{
+        settings.customColors[key.charAt(0).toLowerCase()+key.slice(1)] = e.target.value;
+        if(settings.customColorsOn) applyCustomColors();
+        saveSettings();
+      };
+    });
+
+    document.getElementById('radiusSlider').oninput = (e)=>{
+      settings.radius = Number(e.target.value);
+      document.getElementById('radiusVal').textContent = settings.radius+'px';
+      applyDeepVisuals(); saveSettings();
+    };
+    document.getElementById('lineHeightSlider').oninput = (e)=>{
+      settings.lineHeight = Number(e.target.value);
+      document.getElementById('lineHeightVal').textContent = settings.lineHeight.toFixed(2);
+      applyDeepVisuals(); saveSettings();
+    };
+    document.getElementById('letterSpacingSlider').oninput = (e)=>{
+      settings.letterSpacing = Number(e.target.value);
+      document.getElementById('letterSpacingVal').textContent = settings.letterSpacing.toFixed(1)+'px';
+      applyDeepVisuals(); saveSettings();
+    };
+
+    document.getElementById('textureToggle').onclick = ()=>{
+      settings.texture = !settings.texture;
+      applyDeepVisuals(); saveSettings(); syncDeepControls();
+    };
+
+    document.getElementById('fontUploadBtn').onclick = ()=> document.getElementById('fontUploadInput').click();
+    document.getElementById('fontUploadInput').onchange = (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        settings.customFont = { name:file.name, dataUrl: reader.result };
+        settings.font = 'custom';
+        await applyCustomFont();
+        applyFont('custom');
+        saveSettings();
+        syncDeepControls();
+        renderCustomize();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    document.getElementById('customDecorBtn').onclick = ()=>{
+      const raw = document.getElementById('customDecorInput').value.trim();
+      if(!raw) return;
+      const symbols = raw.split(/\s+/).filter(Boolean);
+      if(!symbols.length) return;
+      settings.customDecorSymbols = symbols;
+      applyDecor('personalizado');
+      saveSettings();
+      renderCustomize();
+    };
+
+    document.getElementById('resetDeepBtn').onclick = ()=>{
+      settings.customColorsOn = false;
+      settings.customColors = { bg:'#e8dcc0', card:'#f8f0dc', ink:'#4a3524', accent:'#7a2e2e' };
+      settings.radius = 3; settings.lineHeight = 1.6; settings.letterSpacing = 0; settings.texture = true;
+      settings.customFont = null; settings.customDecorSymbols = null;
+      if(settings.font==='custom') settings.font = 'cormorant';
+      if(settings.decor==='personalizado') settings.decor = 'nenhum';
+      document.getElementById('customDecorInput').value = '';
+      document.getElementById('fontUploadInput').value = '';
+      applyColors(); applyDeepVisuals(); applyFont(settings.font); applyDecor(settings.decor);
+      saveSettings();
+      syncDeepControls();
+      renderCustomize();
+    };
+  }
+
+  // ---------- modo de escrita ----------
+  function renderModeTabs(){
+    const el = document.getElementById('modeTabs');
+    el.innerHTML = '';
+    modes.forEach(m=>{
+      const b = document.createElement('button');
+      b.className = 'mode-tab' + (m.id===currentMode?' active':'');
+      b.textContent = m.label;
+      b.onclick = ()=>{
+        if(m.id==='perguntas' && currentMode!=='perguntas') currentPrompt = null;
+        currentMode = m.id; renderModeTabs(); renderModeContent();
+      };
+      el.appendChild(b);
+    });
+  }
+
+  function renderModeContent(){
+    const el = document.getElementById('modeContent');
+    if(currentMode==='texto'){
+      el.innerHTML = `<textarea id="textoInput" placeholder="Escreva o que quiser sobre o seu dia..."></textarea>`;
+    } else if(currentMode==='perguntas'){
+      if(!currentPrompt) currentPrompt = situationPrompts[Math.floor(Math.random()*situationPrompts.length)];
+      el.innerHTML = `
+        <div class="prompt-box">
+          <p class="prompt-text" id="promptText">${currentPrompt}</p>
+          <button class="prompt-swap" id="promptSwap">outra pergunta</button>
+        </div>
+        <textarea id="promptResposta" placeholder="Responda com calma, do jeito que vier..."></textarea>`;
+      document.getElementById('promptSwap').onclick = ()=>{
+        let next = currentPrompt;
+        while(next===currentPrompt && situationPrompts.length>1){
+          next = situationPrompts[Math.floor(Math.random()*situationPrompts.length)];
+        }
+        currentPrompt = next;
+        renderModeContent();
+      };
+    } else if(currentMode==='humor'){
+      let html = '<div class="mood-row">';
+      moods.forEach(m=>{
+        html += `<div class="mood-btn" data-mood="${m.id}"><span class="mood-btn-icon">${moodIconMarkup(m.id, '1.4rem')}</span>${m.label}</div>`;
+      });
+      html += '</div><textarea id="humorNota" style="margin-top:.8rem;min-height:70px;" placeholder="Uma frase curta sobre esse humor (opcional)"></textarea>';
+      el.innerHTML = html;
+      el.querySelectorAll('.mood-btn').forEach(b=>{
+        b.onclick = ()=>{
+          selectedMood = b.dataset.mood;
+          el.querySelectorAll('.mood-btn').forEach(x=>x.classList.remove('selected'));
+          b.classList.add('selected');
+        };
+      });
+      selectedMood = null;
+    } else if(currentMode==='gratidao'){
+      el.innerHTML = `
+        <div class="gratitude-list">
+          <input type="text" class="grat-item" placeholder="Uma coisa boa de hoje">
+          <input type="text" class="grat-item" placeholder="Outra coisa boa">
+          <input type="text" class="grat-item" placeholder="Mais uma (opcional)">
+        </div>`;
+    } else if(currentMode==='foto'){
+      pendingPhoto = null;
+      el.innerHTML = `
+        <div class="photo-drop" id="photoDrop">Toque para escolher uma foto</div>
+        <input type="file" accept="image/*" id="photoInput" style="display:none;">
+        <img class="photo-preview" id="photoPreview">
+        <textarea id="fotoLegenda" style="margin-top:.8rem;min-height:70px;" placeholder="Uma legenda para essa foto (opcional)"></textarea>`;
+      const drop = document.getElementById('photoDrop');
+      const input = document.getElementById('photoInput');
+      drop.onclick = ()=>input.click();
+      input.onchange = (e)=>{
+        const file = e.target.files[0];
+        if(!file) return;
+        compressImage(file, (dataUrl)=>{
+          pendingPhoto = dataUrl;
+          const prev = document.getElementById('photoPreview');
+          prev.src = dataUrl;
+          prev.style.display = 'block';
+          drop.textContent = 'Foto escolhida — toque para trocar';
+        });
+      };
+    }
+    renderMoodQuickRow();
+  }
+
+  function compressImage(file, cb, maxW){
+    maxW = maxW || 900;
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      img.onload = ()=>{
+        const scale = Math.min(1, maxW/img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width*scale;
+        canvas.height = img.height*scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        cb(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function moodIconMarkup(id, size){
+    size = size || '1.4rem';
+    const custom = settings.customMoodIcons && settings.customMoodIcons[id];
+    if(custom && custom.startsWith('data:image')){
+      return `<img class="mood-btn-img" src="${custom}" style="width:${size};height:${size};">`;
+    }
+    const m = moods.find(x=>x.id===id);
+    const em = custom || (m ? m.em : '•');
+    return `<span style="font-size:${size};line-height:1;">${escapeHtml(em)}</span>`;
+  }
+
+  function renderMoodQuickRow(){
+    const row = document.getElementById('moodQuickRow');
+    if(!row) return;
+    if(currentMode==='humor'){
+      row.style.display = 'none';
+      document.getElementById('moodEditor').style.display = 'none';
+      return;
+    }
+    row.style.display = '';
+    const chips = document.getElementById('moodQuickChips');
+    chips.innerHTML = moods.map(m=>`
+        <button type="button" class="mood-chip${selectedMood===m.id?' selected':''}" data-mood="${m.id}" title="${escapeHtml(m.label)}">${moodIconMarkup(m.id, '1.1rem')}</button>
+      `).join('') + `<button type="button" class="mood-chip mood-chip-clear${!selectedMood?' selected':''}" data-mood="" title="sem humor registrado">–</button>`;
+    chips.querySelectorAll('.mood-chip').forEach(b=>{
+      b.onclick = ()=>{
+        selectedMood = b.dataset.mood || null;
+        renderMoodQuickRow();
+      };
+    });
+  }
+
+  function renderMoodEditor(){
+    const wrap = document.getElementById('moodEditorRows');
+    if(!wrap) return;
+    wrap.innerHTML = moods.map(m=>{
+      const custom = settings.customMoodIcons && settings.customMoodIcons[m.id];
+      const textVal = (custom && !custom.startsWith('data:image')) ? custom : '';
+      return `
+        <div class="mood-editor-row" data-mood="${m.id}">
+          <span class="mood-editor-preview">${moodIconMarkup(m.id, '1.3rem')}</span>
+          <span class="mood-editor-label">${escapeHtml(m.label)}</span>
+          <input type="text" class="mood-editor-input" maxlength="8" placeholder="emoji" value="${escapeHtml(textVal)}">
+          <button type="button" class="font-upload-btn mood-editor-upload">figurinha</button>
+          <input type="file" accept="image/*" class="mood-editor-file" style="display:none;">
+          ${custom ? '<button type="button" class="mood-editor-reset" title="restaurar padrão">✕</button>' : ''}
+        </div>`;
+    }).join('');
+
+    wrap.querySelectorAll('.mood-editor-row').forEach(row=>{
+      const id = row.dataset.mood;
+      const input = row.querySelector('.mood-editor-input');
+      const uploadBtn = row.querySelector('.mood-editor-upload');
+      const fileInput = row.querySelector('.mood-editor-file');
+      const resetBtn = row.querySelector('.mood-editor-reset');
+
+      const applyChange = (value)=>{
+        if(!settings.customMoodIcons) settings.customMoodIcons = {};
+        if(value) settings.customMoodIcons[id] = value;
+        else delete settings.customMoodIcons[id];
+        saveSettings();
+        renderMoodEditor();
+        renderMoodQuickRow();
+        if(currentMode==='humor') renderModeContent();
+      };
+
+      input.addEventListener('change', ()=> applyChange(input.value.trim()));
+      uploadBtn.onclick = ()=> fileInput.click();
+      fileInput.onchange = (e)=>{
+        const file = e.target.files[0];
+        if(!file) return;
+        compressImage(file, (dataUrl)=> applyChange(dataUrl), 120);
+      };
+      if(resetBtn) resetBtn.onclick = ()=> applyChange(null);
+    });
+  }
+
+  async function saveEntry(){
+    const tagsRaw = document.getElementById('tagsInput').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+    const titulo = document.getElementById('tituloInput').value.trim();
+    const subtitulo = document.getElementById('subtituloInput').value.trim();
+    let content = '', photo = null, mood = selectedMood || null, prompt = null;
+
+    if(currentMode==='texto'){
+      content = document.getElementById('textoInput').value.trim();
+      if(!content){ flashStatus('Escreva algo antes de guardar.'); return; }
+    } else if(currentMode==='perguntas'){
+      const resposta = document.getElementById('promptResposta').value.trim();
+      if(!resposta){ flashStatus('Responda a pergunta antes de guardar.'); return; }
+      prompt = currentPrompt;
+      content = resposta;
+    } else if(currentMode==='humor'){
+      if(!selectedMood){ flashStatus('Escolha um humor antes de guardar.'); return; }
+      mood = selectedMood;
+      content = document.getElementById('humorNota').value.trim();
+    } else if(currentMode==='gratidao'){
+      const items = Array.from(document.querySelectorAll('.grat-item')).map(i=>i.value.trim()).filter(Boolean);
+      if(items.length===0){ flashStatus('Escreva ao menos uma coisa boa.'); return; }
+      content = items.map(i=>'· '+i).join('\n');
+    } else if(currentMode==='foto'){
+      if(!pendingPhoto){ flashStatus('Escolha uma foto antes de guardar.'); return; }
+      photo = pendingPhoto;
+      content = document.getElementById('fotoLegenda').value.trim();
+    }
+
+    const entry = {
+      id: uid(),
+      mode: currentMode,
+      titulo,
+      subtitulo,
+      content,
+      mood,
+      photo,
+      prompt,
+      tags,
+      createdAt: new Date().toISOString(),
+    };
+    entries.unshift(entry);
+    await persist();
+    if(folderHandle && folderAutoSync) await writeEntryFile(entry);
+    flashStatus('Guardado.');
+    document.getElementById('tagsInput').value = '';
+    document.getElementById('tituloInput').value = '';
+    document.getElementById('subtituloInput').value = '';
+    renderQuickTags();
+    selectedMood = null;
+    if(currentMode==='perguntas') currentPrompt = null;
+    renderModeContent();
+    renderRecall();
+  }
+
+  function flashStatus(msg){
+    const s = document.getElementById('saveStatus');
+    s.textContent = msg;
+    setTimeout(()=>{ if(s.textContent===msg) s.textContent=''; }, 2200);
+  }
+
+  async function deleteEntry(id){
+    const removed = entries.find(e=>e.id===id);
+    entries = entries.filter(e=>e.id!==id);
+    await persist();
+    if(removed && folderHandle && folderAutoSync) await deleteEntryFile(removed);
+    renderRecall();
+  }
+
+  // ---------- dial de recordação ----------
+  function renderDial(){
+    const dial = document.getElementById('dial');
+    dial.querySelectorAll('.dial-node').forEach(n=>n.remove());
+    const r = 68;
+    const n = recallModes.length;
+    recallModes.forEach((m, i)=>{
+      const angle = (Math.PI*2*i/n) - Math.PI/2;
+      const x = 85 + r*Math.cos(angle);
+      const y = 85 + r*Math.sin(angle);
+      const node = document.createElement('div');
+      node.className = 'dial-node' + (m.id===currentRecall?' active':'');
+      node.style.left = x+'px';
+      node.style.top = y+'px';
+      node.innerHTML = `<span class="ic">${m.ic}</span>${m.label}`;
+      node.onclick = ()=>{ currentRecall = m.id; tagFilter = null; renderRecall(); };
+      dial.appendChild(node);
+    });
+    const active = recallModes.find(m=>m.id===currentRecall);
+    document.getElementById('dialCenter').innerHTML = active.label.toLowerCase().replace(' ', '<br>');
+    document.getElementById('dialLegend').innerHTML = `<b>${active.label}</b> — ${active.desc}`;
+  }
+
+  function entryCardHtml(e, q){
+    const d = new Date(e.createdAt);
+    const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'}) + ' · ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    const modeLabel = {texto:'texto', perguntas:'pergunta guiada', humor:'humor', gratidao:'gratidão', foto:'foto'}[e.mode] || e.mode;
+    let moodHtml = '';
+    if(e.mood){
+      const m = moods.find(x=>x.id===e.mood);
+      if(m) moodHtml = ' · ' + moodIconMarkup(e.mood, '.95rem') + ' ' + escapeHtml(m.label);
+    }
+    let html = `<div class="entry-card">
+      <div class="entry-head">
+        <span class="entry-date">${highlightText(dateStr, q)}</span>
+        <span class="entry-mode">${modeLabel}${moodHtml}</span>
+      </div>`;
+    if(e.titulo) html += `<h3 class="entry-titulo">${highlightText(e.titulo, q)}</h3>`;
+    if(e.subtitulo) html += `<p class="entry-subtitulo">${highlightText(e.subtitulo, q)}</p>`;
+    if(e.photo) html += `<img class="entry-photo" src="${e.photo}">`;
+    if(e.prompt) html += `<p class="entry-prompt">${highlightText(e.prompt, q)}</p>`;
+    if(e.content) html += `<div class="entry-body">${highlightText(e.content, q)}</div>`;
+    if(e.tags && e.tags.length){
+      html += '<div class="entry-tags">' + e.tags.map(t=>`<span class="tag-pill" data-tag="${escapeHtml(t)}">${highlightText(t, q)}</span>`).join('') + '</div>';
+    }
+    html += `<div style="margin-top:.6rem;text-align:right;"><button class="entry-del" data-del="${e.id}">apagar</button></div>`;
+    html += '</div>';
+    return html;
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function highlightText(s, q){
+    const esc = escapeHtml(String(s));
+    if(!q) return esc;
+    const qEsc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try{
+      return esc.replace(new RegExp('(' + qEsc + ')', 'ig'), '<mark class="search-hl">$1</mark>');
+    }catch(err){ return esc; }
+  }
+
+  function bindDeletes(container){
+    container.querySelectorAll('[data-del]').forEach(b=>{
+      b.onclick = ()=>deleteEntry(b.dataset.del);
+    });
+  }
+
+  function renderRecall(){
+    renderDial();
+    const el = document.getElementById('recallContent');
+    if(currentRecall==='timeline'){
+      if(entries.length===0){ el.innerHTML = '<div class="empty-msg">Nada guardado ainda. Escreva a primeira entrada acima.</div>'; return; }
+      el.innerHTML = entries.map(entryCardHtml).join('');
+      bindDeletes(el);
+    } else if(currentRecall==='calendario'){
+      renderCalendar(el);
+    } else if(currentRecall==='busca'){
+      renderSearch(el);
+    } else if(currentRecall==='nestedia'){
+      renderOnThisDay(el);
+    } else if(currentRecall==='aleatorio'){
+      renderRandom(el);
+    } else if(currentRecall==='organizar'){
+      renderOrganizado(el);
+    } else if(currentRecall==='etiquetas'){
+      renderTags(el);
+    }
+  }
+
+  function renderOrganizado(el){
+    if(entries.length===0){ el.innerHTML = '<div class="empty-msg">Nada guardado ainda para organizar.</div>'; return; }
+    const monthNames = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+    const tree = {};
+    entries.forEach(e=>{
+      const d = new Date(e.createdAt);
+      const y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+      tree[y] = tree[y] || {};
+      tree[y][m] = tree[y][m] || {};
+      tree[y][m][day] = tree[y][m][day] || [];
+      tree[y][m][day].push(e);
+    });
+
+    const years = Object.keys(tree).map(Number).sort((a,b)=>b-a);
+    let html = '';
+    years.forEach((y, yi)=>{
+      const months = Object.keys(tree[y]).map(Number).sort((a,b)=>b-a);
+      html += `<details class="org-year"${yi===0 ? ' open' : ''}><summary>${y}</summary>`;
+      months.forEach((m, mi)=>{
+        const days = Object.keys(tree[y][m]).map(Number).sort((a,b)=>b-a);
+        html += `<details class="org-month"${(yi===0 && mi===0) ? ' open' : ''}><summary>${monthNames[m]}</summary>`;
+        days.forEach(day=>{
+          const dayEntries = tree[y][m][day];
+          html += `<details class="org-day" open><summary>Dia ${String(day).padStart(2,'0')} · ${dayEntries.length} ${dayEntries.length===1 ? 'entrada' : 'entradas'}</summary>`;
+          html += dayEntries.map(entryCardHtml).join('');
+          html += '</details>';
+        });
+        html += '</details>';
+      });
+      html += '</details>';
+    });
+
+    el.innerHTML = html;
+    bindDeletes(el);
+  }
+
+  const quickTagSuggestions = ['trabalho','viagens','sentimentos','família','saúde','projetos'];
+
+  function renderTags(el){
+    if(tagFilter){
+      const found = entries.filter(e=>e.tags && e.tags.some(t=>t.toLowerCase()===tagFilter.toLowerCase()));
+      el.innerHTML = `
+        <div class="tag-filter-head">
+          <button class="cal-nav" id="tagBackBtn">← todas as etiquetas</button>
+          <span class="tag-filter-title">#${escapeHtml(tagFilter)} <span class="tag-filter-count">(${found.length} ${found.length===1?'entrada':'entradas'})</span></span>
+        </div>
+        ${found.length ? found.map(e=>entryCardHtml(e)).join('') : '<div class="empty-msg">Nada guardado ainda com essa etiqueta.</div>'}
+      `;
+      document.getElementById('tagBackBtn').onclick = ()=>{ tagFilter = null; renderRecall(); };
+      bindDeletes(el);
+      return;
+    }
+
+    const counts = {};
+    entries.forEach(e=>(e.tags||[]).forEach(t=>{ counts[t] = (counts[t]||0)+1; }));
+    const usedTags = Object.keys(counts).sort((a,b)=> counts[b]-counts[a] || a.localeCompare(b));
+
+    let html = '';
+    if(usedTags.length===0){
+      html += '<div class="empty-msg">Nenhuma etiqueta ainda. Adicione tags como trabalho, viagens ou sentimentos ao guardar uma entrada — os temas rápidos aparecem lá embaixo, no bloco "Guardar".</div>';
+    } else {
+      const max = Math.max(...usedTags.map(t=>counts[t]));
+      html += '<p class="export-desc" style="margin:0 0 .8rem;">Suas etiquetas, das mais usadas às mais raras:</p>';
+      html += '<div class="tag-cloud">' + usedTags.map(t=>{
+        const scale = (0.82 + (counts[t]/max) * 0.55).toFixed(2);
+        return `<button type="button" class="tag-cloud-pill" data-tag="${escapeHtml(t)}" style="font-size:${scale}rem;">${escapeHtml(t)}<span class="tag-count">${counts[t]}</span></button>`;
+      }).join('') + '</div>';
+    }
+
+    const unusedSuggestions = quickTagSuggestions.filter(s=>!usedTags.some(t=>t.toLowerCase()===s.toLowerCase()));
+    if(unusedSuggestions.length){
+      html += `<p class="export-desc" style="margin:1.3rem 0 .6rem;">Temas que você ainda não usou:</p>
+        <div class="tag-cloud">${unusedSuggestions.map(s=>`<button type="button" class="tag-cloud-pill suggest" data-tag="${s}" disabled title="ainda sem entradas com essa etiqueta">${s}</button>`).join('')}</div>`;
+    }
+
+    el.innerHTML = html;
+    el.querySelectorAll('.tag-cloud-pill:not([disabled])').forEach(btn=>{
+      btn.onclick = ()=>{ tagFilter = btn.dataset.tag; renderRecall(); };
+    });
+  }
+
+  function dayKey(d){ return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
+
+  // ---- fases da lua (calculado localmente, sem depender de internet) ----
+  const SYNODIC_MONTH = 29.530588853; // duração média do ciclo lunar, em dias
+  const KNOWN_NEW_MOON_UTC = Date.UTC(2000,0,6,18,14,0); // lua nova de referência
+
+  function moonPhase(date){
+    const diffDays = (date.getTime() - KNOWN_NEW_MOON_UTC) / 86400000;
+    let age = diffDays % SYNODIC_MONTH;
+    if(age < 0) age += SYNODIC_MONTH;
+    return { age, fraction: age / SYNODIC_MONTH }; // fraction: 0=nova, .5=cheia
+  }
+
+  function moonPhaseInfo(fraction){
+    const illumPct = Math.round((1 - Math.cos(2*Math.PI*fraction))/2*100);
+    let name;
+    if(fraction < 0.02 || fraction > 0.98) name = 'Lua nova';
+    else if(fraction < 0.235) name = 'Crescente côncava';
+    else if(fraction < 0.265) name = 'Quarto crescente';
+    else if(fraction < 0.48) name = 'Crescente gibosa';
+    else if(fraction < 0.52) name = 'Lua cheia';
+    else if(fraction < 0.735) name = 'Minguante gibosa';
+    else if(fraction < 0.765) name = 'Quarto minguante';
+    else name = 'Minguante côncava';
+    return { name, illumPct };
+  }
+
+  // desenha o disco lunar em SVG, com a parte iluminada calculada ponto a ponto
+  // (mais confiável do que usar arcos SVG com flags de sweep, que são fáceis de errar)
+  function moonSvg(fraction, size, extraClass){
+    const r = size/2 - 1;
+    const cx = size/2, cy = size/2;
+    const theta = fraction * 2 * Math.PI;
+    const rx = Math.abs(Math.cos(theta)) * r;
+    const waxing = fraction < 0.5;
+    const outerSign = waxing ? 1 : -1;
+    const crescent = fraction < 0.25 || fraction > 0.75;
+    const termSign = crescent ? outerSign : -outerSign;
+
+    const N = 28;
+    const pts = [];
+    for(let i=0;i<=N;i++){
+      const y = -r + (2*r)*(i/N);
+      const x = outerSign * Math.sqrt(Math.max(0, r*r - y*y));
+      pts.push((cx+x).toFixed(2)+','+(cy+y).toFixed(2));
+    }
+    for(let i=0;i<=N;i++){
+      const y = r - (2*r)*(i/N);
+      const x = termSign * rx * Math.sqrt(Math.max(0, 1 - (y*y)/(r*r)));
+      pts.push((cx+x).toFixed(2)+','+(cy+y).toFixed(2));
+    }
+    const d = 'M ' + pts.join(' L ') + ' Z';
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="moon-svg${extraClass?' '+extraClass:''}">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--card-2)" stroke="var(--line)" stroke-width="0.7"/>
+      <path d="${d}" fill="var(--gold)"/>
+    </svg>`;
+  }
+
+  // ---- clima local ----
+  // Usa a localização do navegador + Open-Meteo (previsão gratuita, sem chave de API)
+  // e tenta descobrir o nome do lugar via geocodificação reversa (BigDataCloud, também sem chave).
+  let weatherCache = null;
+
+  function weatherCodeInfo(code){
+    const map = {
+      0:['☀','céu limpo'], 1:['🌤','poucas nuvens'], 2:['⛅','parcialmente nublado'], 3:['☁','nublado'],
+      45:['🌫','neblina'], 48:['🌫','neblina com geada'],
+      51:['🌦','garoa fraca'], 53:['🌦','garoa'], 55:['🌦','garoa forte'],
+      56:['🌧','garoa gelada'], 57:['🌧','garoa gelada forte'],
+      61:['🌧','chuva fraca'], 63:['🌧','chuva'], 65:['🌧','chuva forte'],
+      66:['🌧','chuva gelada'], 67:['🌧','chuva gelada forte'],
+      71:['🌨','neve fraca'], 73:['🌨','neve'], 75:['🌨','neve forte'], 77:['🌨','grãos de neve'],
+      80:['🌦','pancadas fracas'], 81:['🌦','pancadas de chuva'], 82:['🌧','pancadas fortes'],
+      85:['🌨','pancadas de neve'], 86:['🌨','pancadas de neve fortes'],
+      95:['⛈','trovoadas'], 96:['⛈','trovoadas com granizo'], 99:['⛈','trovoadas fortes'],
+    };
+    return map[code] || ['🌡','—'];
+  }
+
+  async function fetchLocalWeather(){
+    const content = document.getElementById('weatherContent');
+    if(!content) return;
+    content.innerHTML = '<p class="lw-status">Localizando...</p>';
+    if(!navigator.geolocation){
+      content.innerHTML = '<p class="tide-warning">Geolocalização não disponível neste navegador.</p>';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos)=>{
+      const {latitude, longitude} = pos.coords;
+      content.innerHTML = '<p class="lw-status">Buscando o clima...</p>';
+      try{
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&timezone=auto`);
+        const data = await res.json();
+        if(!data.current) throw new Error('sem dados atuais');
+        let placeName = '';
+        try{
+          const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`);
+          const geoData = await geoRes.json();
+          placeName = [geoData.city || geoData.locality, geoData.countryName].filter(Boolean).join(', ');
+        }catch(e){ /* segue sem o nome do lugar */ }
+        weatherCache = {
+          temp: data.current.temperature_2m,
+          code: data.current.weather_code,
+          wind: data.current.wind_speed_10m,
+          humidity: data.current.relative_humidity_2m,
+          placeName,
+        };
+        renderWeatherCol();
+      }catch(e){
+        content.innerHTML = '<p class="tide-warning">Não consegui buscar o clima agora. Tente de novo.</p>';
+      }
+    }, ()=>{
+      content.innerHTML = '<p class="tide-warning">Permissão de localização negada ou indisponível.</p>';
+    }, {timeout:10000});
+  }
+
+  function renderWeatherCol(){
+    const content = document.getElementById('weatherContent');
+    if(!content) return;
+    if(!weatherCache){
+      content.innerHTML = `<p class="lw-status">Veja a temperatura e o tempo de onde você está agora.</p>
+        <button type="button" class="mood-edit-btn" id="weatherFetchBtn">📍 usar minha localização</button>`;
+      document.getElementById('weatherFetchBtn').onclick = fetchLocalWeather;
+      return;
+    }
+    const [icon, desc] = weatherCodeInfo(weatherCache.code);
+    content.innerHTML = `
+      <div class="weather-main">
+        <span class="weather-icon">${icon}</span>
+        <span class="weather-temp">${Math.round(weatherCache.temp)}°C</span>
+      </div>
+      <p class="weather-desc">${desc}${weatherCache.placeName ? ' · '+escapeHtml(weatherCache.placeName) : ''}</p>
+      <p class="lw-weather-meta">vento ${Math.round(weatherCache.wind)} km/h · umidade ${weatherCache.humidity}%</p>
+      <button type="button" class="mood-edit-btn" id="weatherRefreshBtn">atualizar</button>
+    `;
+    document.getElementById('weatherRefreshBtn').onclick = fetchLocalWeather;
+  }
+
+  // ---- tábua de marés ----
+  // Arquitetura do componente (roda automaticamente ao abrir o calendário, uma vez por sessão):
+  //   [Início] -> pede permissão de GPS -> captura lat/lon -> roda Haversine (código local,
+  //   contra um "banco" de portos da Marinha do Brasil [CHM] já embutido no app, sem chamada
+  //   de rede) -> identifica o porto mais próximo -> faz a requisição HTTP à API
+  //   (https://qzz.io/{id_do_porto}/hoje) -> atualiza a UI.
+  // Se o GPS for negado ou indisponível, o app não quebra: mostra um seletor para o usuário
+  // escolher a praia/porto manualmente na mesma lista local, e segue o resto do pipeline
+  // normalmente a partir da escolha.
+  // Cache: como a maré do dia não muda, o retorno da API fica salvo no localStorage por
+  // porto+data. Se o usuário abrir o app de novo no mesmo porto no mesmo dia, carrega do
+  // cache local, sem gastar internet.
+  let tideCache = null;
+  let tideAutoAttempted = false;
+
+  // Banco de portos da Marinha do Brasil [CHM] (Diretoria de Hidrografia e Navegação),
+  // embutido localmente para que a etapa de Haversine seja 100% local — nenhuma chamada de
+  // rede é feita para "descobrir" portos.
+  // ATENÇÃO: os campos "id" abaixo são placeholders (slugs) — troque cada um pelo ID real
+  // que a sua fonte de dados (qzz.io / CHM) usa para identificar o porto, já que eu não
+  // tenho acesso a essa tabela oficial de IDs para verificar. As coordenadas (lat/lng) são
+  // as das cidades reais e podem ser usadas como estão.
+  const TIDE_PORTS = [
+    {id:'macapa', name:'Macapá, AP', lat:-0.0389, lng:-51.0664},
+    {id:'belem', name:'Belém, PA', lat:-1.4558, lng:-48.5039},
+    {id:'sao-luis', name:'São Luís, MA', lat:-2.5307, lng:-44.3068},
+    {id:'areia-branca', name:'Areia Branca, RN', lat:-4.9553, lng:-37.1408},
+    {id:'natal', name:'Natal, RN', lat:-5.7945, lng:-35.2110},
+    {id:'cabedelo', name:'Cabedelo, PB', lat:-6.9689, lng:-34.8339},
+    {id:'recife', name:'Recife, PE', lat:-8.0578, lng:-34.8829},
+    {id:'maceio', name:'Maceió, AL', lat:-9.6658, lng:-35.7353},
+    {id:'aracaju', name:'Aracaju, SE', lat:-10.9472, lng:-37.0731},
+    {id:'salvador', name:'Salvador, BA', lat:-12.9718, lng:-38.5011},
+    {id:'ilheus', name:'Ilhéus, BA', lat:-14.7889, lng:-39.0472},
+    {id:'vitoria', name:'Vitória, ES', lat:-20.3155, lng:-40.3128},
+    {id:'cabo-frio', name:'Cabo Frio, RJ', lat:-22.8894, lng:-42.0286},
+    {id:'niteroi', name:'Niterói, RJ', lat:-22.8833, lng:-43.1036},
+    {id:'rio-de-janeiro', name:'Rio de Janeiro, RJ', lat:-22.9068, lng:-43.1729},
+    {id:'angra-dos-reis', name:'Angra dos Reis, RJ', lat:-23.0067, lng:-44.3181},
+    {id:'ubatuba', name:'Ubatuba, SP', lat:-23.4336, lng:-45.0838},
+    {id:'sao-sebastiao', name:'São Sebastião, SP', lat:-23.7608, lng:-45.4058},
+    {id:'santos', name:'Santos, SP', lat:-23.9608, lng:-46.3336},
+    {id:'paranagua', name:'Paranaguá, PR', lat:-25.5164, lng:-48.5225},
+    {id:'sao-francisco-do-sul', name:'São Francisco do Sul, SC', lat:-26.2431, lng:-48.6386},
+    {id:'itajai', name:'Itajaí, SC', lat:-26.9078, lng:-48.6614},
+    {id:'florianopolis', name:'Florianópolis, SC', lat:-27.5954, lng:-48.5480},
+    {id:'imbituba', name:'Imbituba, SC', lat:-28.2364, lng:-48.6706},
+    {id:'tramandai', name:'Tramandaí, RS', lat:-29.9836, lng:-50.1339},
+    {id:'porto-alegre', name:'Porto Alegre, RS', lat:-30.0346, lng:-51.2177},
+    {id:'rio-grande', name:'Rio Grande, RS', lat:-32.0350, lng:-52.0986},
+    {id:'manaus', name:'Manaus, AM', lat:-3.1190, lng:-60.0217},
+  ];
+
+  function haversineKm(lat1, lon1, lat2, lon2){
+    const R = 6371;
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLon = (lon2-lon1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  // Etapa 1 — Pede permissão de GPS e captura lat/lon
+  function tideRequestGpsAndCapture(){
+    return new Promise((resolve, reject)=>{
+      if(!navigator.geolocation){ reject(new Error('sem-geolocalizacao')); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos)=> resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        ()=> reject(new Error('permissao-negada')),
+        { timeout: 10000 }
+      );
+    });
+  }
+
+  // Etapa 2 — Roda Haversine localmente (sem rede) contra o banco de portos [CHM] embutido
+  // e identifica o porto mais próximo.
+  function tideRunHaversineIdentifyPort(lat, lon){
+    let nearest = null, nearestDist = Infinity;
+    TIDE_PORTS.forEach(port=>{
+      const d = haversineKm(lat, lon, port.lat, port.lng);
+      if(d < nearestDist){ nearestDist = d; nearest = port; }
+    });
+    if(!nearest) return null;
+    return { port: nearest, distanceKm: nearestDist };
+  }
+
+  // ---- cache local (por porto + data do dia) ----
+  function tideCacheKey(portId){
+    const d = new Date();
+    const ymd = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return `diario:tide:${portId}:${ymd}`;
+  }
+  function tideReadCache(portId){
+    try{
+      const raw = localStorage.getItem(tideCacheKey(portId));
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function tideWriteCache(portId, data){
+    try{ localStorage.setItem(tideCacheKey(portId), JSON.stringify(data)); }catch(e){ /* armazenamento indisponível ou cheio — segue sem cache */ }
+  }
+
+  // Etapa 3 — Faz a requisição HTTP à API de marés (https://qzz.io/{id_do_porto}/hoje) para
+  // o porto já identificado. OBS: não tenho a documentação real desse endpoint, então o
+  // parsing abaixo assume um formato razoável (lista de eventos com hora/tipo/altura) —
+  // ajuste `tideFetchPredictionsForPort` para o formato exato que a API realmente devolver.
+  async function tideFetchPredictionsForPort(port){
+    const res = await fetch(`https://qzz.io/${port.id}/hoje`);
+    if(!res.ok) throw new Error('http-' + res.status);
+    const data = await res.json();
+    const eventos = data.mares || data.eventos || data.predictions || (Array.isArray(data) ? data : []);
+    return eventos.map(ev => ({
+      time: ev.hora || ev.time || ev.t || '',
+      type: /alta|high|h/i.test(ev.tipo || ev.type || '') ? 'Alta' : 'Baixa',
+      heightM: parseFloat(ev.altura ?? ev.height ?? ev.v ?? 0).toFixed(2),
+    }));
+  }
+
+  // Usa o porto já identificado (por GPS+Haversine ou escolhido manualmente): olha o cache
+  // do dia primeiro; se não tiver, faz a requisição HTTP e grava no cache.
+  async function tideLoadForPort(port, distanceKm){
+    const content = document.getElementById('tideContent');
+    const cached = tideReadCache(port.id);
+    if(cached){
+      tideCache = { source:'chm', fromCache:true, stationName: port.name, distanceKm, rows: cached.rows };
+      renderTideCol();
+      return;
+    }
+    if(content) content.innerHTML = `<p class="lw-status">Buscando previsão do porto ${escapeHtml(port.name)}...</p>`;
+    try{
+      const rows = await tideFetchPredictionsForPort(port); // requisição HTTP à API
+      if(!rows || rows.length===0){
+        showTideEstimate(`O porto ${port.name} não tem previsão disponível para hoje.`);
+        return;
+      }
+      tideCache = { source:'chm', fromCache:false, stationName: port.name, distanceKm, rows };
+      tideWriteCache(port.id, { rows });
+      renderTideCol(); // atualiza a UI
+    }catch(err){
+      showTideEstimate(`Não consegui buscar a maré real do porto ${port.name} agora.`);
+    }
+  }
+
+  // Orquestrador — segue exatamente a arquitetura:
+  // Início -> permissão de GPS -> captura lat/lon -> Haversine local -> identifica porto
+  // -> requisição HTTP (com cache do dia) -> atualiza a UI
+  async function tideRunPipeline(){
+    const content = document.getElementById('tideContent');
+    if(content) content.innerHTML = '<p class="lw-status">Pedindo permissão de localização...</p>';
+
+    let coords;
+    try{
+      coords = await tideRequestGpsAndCapture(); // captura lat/lon
+    }catch(err){
+      // GPS negado ou indisponível — não quebra: cai para a seleção manual de porto
+      showManualPortPicker(err.message==='sem-geolocalizacao'
+        ? 'Geolocalização não disponível neste navegador.'
+        : 'Permissão de localização negada. Escolha sua praia/porto na lista abaixo.');
+      return;
+    }
+
+    if(content) content.innerHTML = '<p class="lw-status">Calculando o porto mais próximo (Haversine local)...</p>';
+    const found = tideRunHaversineIdentifyPort(coords.lat, coords.lon); // Haversine local + identifica porto
+
+    if(!found){
+      showManualPortPicker('Não achei um porto próximo no banco local. Escolha sua praia/porto na lista abaixo.');
+      return;
+    }
+
+    await tideLoadForPort(found.port, found.distanceKm);
+  }
+
+  function showTideEstimate(warningMsg){
+    tideCache = { source:'estimate', warningMsg };
+    renderTideCol();
+  }
+
+  // Dica de UX: se o GPS falhar, não quebra — mostra uma lista para o usuário escolher a
+  // praia/porto manualmente. A escolha segue o pipeline a partir da Etapa 3 (cache + HTTP).
+  function showManualPortPicker(warningMsg){
+    tideCache = { source:'manual-picker', warningMsg };
+    renderTideCol();
+  }
+
+  // Calcula o status atual da maré (enchendo/secando + próximo evento) a partir dos 4 pontos
+  // do dia — usado no Card Compacto (Opção A).
+  function tideCurrentStatus(rows){
+    const now = new Date();
+    const parsed = rows.map(r=>{
+      const [hh, mm] = (r.time||'00:00').split(':').map(n=>parseInt(n,10));
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh||0, mm||0);
+      return { ...r, dateObj: d };
+    }).sort((a,b)=> a.dateObj - b.dateObj);
+
+    const next = parsed.find(r => r.dateObj > now);
+    const prevIdx = next ? parsed.indexOf(next) - 1 : parsed.length - 1;
+    const prev = prevIdx >= 0 ? parsed[prevIdx] : null;
+
+    if(next){
+      const rising = next.type === 'Alta';
+      return {
+        arrow: rising ? 'up' : 'down',
+        headline: rising ? 'Maré enchendo' : 'Maré secando',
+        detail: `Próxima maré ${next.type === 'Alta' ? 'cheia' : 'baixa'}: ${next.time}`,
+      };
+    }
+    if(prev){
+      const rising = prev.type === 'Baixa'; // depois da última baixa do dia, a tendência é encher
+      return {
+        arrow: rising ? 'up' : 'down',
+        headline: rising ? 'Maré enchendo' : 'Maré secando',
+        detail: `Sem mais dados de hoje · última: ${prev.type === 'Alta' ? 'cheia' : 'baixa'} às ${prev.time}`,
+      };
+    }
+    return { arrow: 'up', headline: 'Maré', detail: 'Sem dados suficientes para hoje' };
+  }
+
+  function renderTideCol(){
+    const content = document.getElementById('tideContent');
+    if(!content) return;
+    if(!tideCache){
+      if(!tideAutoAttempted){
+        // [Início] automático — dispara o pipeline sozinho na primeira vez que o painel aparece
+        tideAutoAttempted = true;
+        tideRunPipeline();
+        return;
+      }
+      content.innerHTML = `<p class="lw-status">Veja a previsão de maré do porto mais próximo de você.</p>
+        <button type="button" class="mood-edit-btn" id="tideFetchBtn">📍 usar minha localização</button>
+        <button type="button" class="mood-edit-btn" id="tideManualBtn">escolher praia/porto manualmente</button>`;
+      document.getElementById('tideFetchBtn').onclick = tideRunPipeline;
+      document.getElementById('tideManualBtn').onclick = ()=> showManualPortPicker();
+      return;
+    }
+    if(tideCache.source === 'chm'){
+      const status = tideCurrentStatus(tideCache.rows);
+      const rowsHtml = tideCache.rows.map(r=>`<tr><td>${escapeHtml(r.time)}</td><td>${r.type}</td><td>${r.heightM} m</td></tr>`).join('');
+      content.innerHTML = `
+        <div class="tide-card">
+          <div class="tide-card-port">${escapeHtml(tideCache.stationName)}${tideCache.distanceKm!=null ? ` · ~${Math.round(tideCache.distanceKm)} km de você` : ' · escolhido manualmente'}</div>
+          <div class="tide-card-status">
+            <span class="tide-arrow tide-arrow-${status.arrow}">${status.arrow==='up' ? '↑' : '↓'}</span>
+            <div>
+              <div class="tide-card-headline">${status.headline}</div>
+              <div class="tide-card-detail">${status.detail}</div>
+            </div>
+          </div>
+          <p class="tide-source">fonte: CHM/Marinha${tideCache.fromCache ? ' · carregado do cache local' : ''}</p>
+          <details class="tide-details">
+            <summary>ver os 4 horários de hoje</summary>
+            <table class="tide-table"><thead><tr><th>Hora</th><th>Tipo</th><th>Altura</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+          </details>
+          <div class="tide-card-actions">
+            <button type="button" class="mood-edit-btn" id="tideRefreshBtn">atualizar</button>
+            <button type="button" class="mood-edit-btn" id="tideManualBtn">trocar porto</button>
+          </div>
+        </div>
+      `;
+    } else if(tideCache.source === 'manual-picker'){
+      const options = TIDE_PORTS.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+      content.innerHTML = `
+        ${tideCache.warningMsg ? `<p class="tide-warning">${escapeHtml(tideCache.warningMsg)}</p>` : ''}
+        <div class="cycle-fields">
+          <label>praia/porto <select id="tideManualSelect">${options}</select></label>
+        </div>
+        <button type="button" class="mood-edit-btn" id="tideManualConfirmBtn">usar este porto</button>
+        <button type="button" class="mood-edit-btn" id="tideFetchBtn">tentar de novo com minha localização</button>
+      `;
+      document.getElementById('tideFetchBtn').onclick = tideRunPipeline;
+      document.getElementById('tideManualConfirmBtn').onclick = ()=>{
+        const id = document.getElementById('tideManualSelect').value;
+        const port = TIDE_PORTS.find(p=>p.id===id);
+        if(port) tideLoadForPort(port, null);
+      };
+    } else {
+      const { fraction } = moonPhase(new Date());
+      const est = tideTrendEstimate(fraction);
+      content.innerHTML = `
+        ${tideCache.warningMsg ? `<p class="tide-warning">${escapeHtml(tideCache.warningMsg)}</p>` : ''}
+        <div class="tide-estimate-label">${est.label}</div>
+        <p class="lw-weather-meta">${est.hint}</p>
+        <p class="tide-caveat">Isso não são horários reais de maré alta/baixa — é só uma tendência calculada pela fase da lua.</p>
+        <button type="button" class="mood-edit-btn" id="tideRefreshBtn">tentar de novo com minha localização</button>
+        <button type="button" class="mood-edit-btn" id="tideManualBtn">escolher praia/porto manualmente</button>
+      `;
+    }
+    const refreshBtn = document.getElementById('tideRefreshBtn');
+    if(refreshBtn) refreshBtn.onclick = tideRunPipeline;
+    const manualBtn = document.getElementById('tideManualBtn');
+    if(manualBtn) manualBtn.onclick = ()=> showManualPortPicker();
+  }
+
+  function tideTrendEstimate(fraction){
+    const distToSyzygy = Math.min(Math.abs(fraction-0), Math.abs(fraction-0.5), Math.abs(1-fraction));
+    const distToQuadrature = Math.min(Math.abs(fraction-0.25), Math.abs(fraction-0.75));
+    if(distToSyzygy < distToQuadrature){
+      return {label:'Maré de sizígia — variação maior entre alta e baixa', hint:'Estamos perto da lua nova ou cheia, quando as marés costumam ser mais fortes.'};
+    }
+    return {label:'Maré de quadratura — variação menor entre alta e baixa', hint:'Estamos perto do quarto crescente ou minguante, quando as marés costumam ser mais fracas.'};
+  }
+
+
+  // ---- ciclo menstrual ----
+  // Tudo calculado e guardado só localmente (mesmo lugar que as outras configurações do diário).
+  // Desativado por padrão — o usuário precisa ligar essa opção de propósito.
+  function hexToRgb(hex){
+    hex = hex.replace('#','');
+    return { r: parseInt(hex.substr(0,2),16), g: parseInt(hex.substr(2,2),16), b: parseInt(hex.substr(4,2),16) };
+  }
+  function lerpColor(c1, c2, t){
+    t = Math.max(0, Math.min(1, t));
+    const p1 = hexToRgb(c1), p2 = hexToRgb(c2);
+    const r = Math.round(p1.r + (p2.r-p1.r)*t);
+    const g = Math.round(p1.g + (p2.g-p1.g)*t);
+    const b = Math.round(p1.b + (p2.b-p1.b)*t);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // ---- temperatura corporal basal ----
+  function tempToC(value, unit){
+    value = parseFloat(value);
+    if(isNaN(value)) return null;
+    return unit==='f' ? (value-32)*5/9 : value;
+  }
+  function tempCtoDisplay(tempC, unit){
+    return unit==='f' ? (tempC*9/5+32) : tempC;
+  }
+  function formatTemp(tempC, unit){
+    unit = unit || (settings.cycle && settings.cycle.tempUnit) || 'c';
+    const v = tempCtoDisplay(tempC, unit);
+    return v.toFixed(1) + '°' + (unit==='f' ? 'F' : 'C');
+  }
+  // amarelo → laranja → vermelho conforme a temperatura sobe, dentro da faixa típica de temperatura basal
+  function tempToColor(tempC){
+    const min=35.5, max=38.0;
+    let t = (tempC-min)/(max-min);
+    t = Math.max(0, Math.min(1, t));
+    if(t<0.5) return lerpColor('#f2c94c', '#e8791e', t*2);
+    return lerpColor('#e8791e', '#c81e1e', (t-0.5)*2);
+  }
+  function tempIconMarkup(tempC, size){
+    size = size || 13;
+    if(tempC==null || isNaN(tempC)) return '';
+    const color = tempToColor(tempC);
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="cycle-svg">
+      <path d="M10 3.6 a2 2 0 0 1 4 0 v9.6 a4.3 4.3 0 1 1 -4 0 Z" fill="${color}" stroke="rgba(60,40,20,.3)" stroke-width=".6"/>
+      <circle cx="12" cy="17.3" r="2.5" fill="${color}" stroke="rgba(60,40,20,.3)" stroke-width=".5"/>
+    </svg>`;
+  }
+  function setTemperatureForDate(dateStr, valueRaw, unit){
+    const c = tempToC(valueRaw, unit);
+    if(c==null) return;
+    settings.cycle.temperatures[dateStr] = Math.round(c*100)/100;
+    saveSettings();
+  }
+  function getTemperatureForDate(dateStr){
+    const v = settings.cycle.temperatures ? settings.cycle.temperatures[dateStr] : null;
+    return (v===undefined) ? null : v;
+  }
+
+  // Coleta as leituras de temperatura registradas dentro de um intervalo [startDate, endDate)
+  function cycleTempsForRange(startDate, endDate){
+    const dayMs = 86400000;
+    const out = [];
+    for(let t=startDate.getTime(); t<endDate.getTime(); t+=dayMs){
+      const d = new Date(t);
+      const key = dayKeyIso(d);
+      const val = getTemperatureForDate(key);
+      if(val!=null) out.push({ date:new Date(d), dayIndex: Math.round((t-startDate.getTime())/dayMs), tempC: val });
+    }
+    return out;
+  }
+
+  // Detecta o "salto térmico" (método da linha de base): compara os primeiros dias do ciclo
+  // com os seguintes e procura 3 leituras seguidas acima da linha de base — sinal clássico
+  // de que a ovulação já aconteceu (a temperatura basal sobe depois da ovulação, não antes).
+  function detectOvulationShift(startDate, endDate){
+    const readings = cycleTempsForRange(startDate, endDate);
+    if(readings.length < 9) return null; // dados insuficientes para uma leitura confiável
+    const early = readings.filter(r=>r.dayIndex < 7);
+    if(early.length < 3) return null;
+    const baseline = early.reduce((a,b)=>a+b.tempC,0)/early.length;
+    const coverline = baseline + 0.15;
+    for(let i=0;i<readings.length-2;i++){
+      const a=readings[i], b=readings[i+1], c=readings[i+2];
+      if(a.dayIndex < 7) continue;
+      if(b.dayIndex - a.dayIndex > 1 || c.dayIndex - b.dayIndex > 1) continue; // precisam ser dias consecutivos
+      if(a.tempC > coverline && b.tempC > coverline && c.tempC > coverline){
+        const dayMs = 86400000;
+        // a ovulação costuma ocorrer no dia anterior ao início da subida da temperatura
+        const ovulationDate = new Date(a.date.getTime() - dayMs);
+        return { shiftDate: a.date, ovulationDate, coverline, baseline };
+      }
+    }
+    return null;
+  }
+
+  // Duração da fase lútea (ovulação → próxima menstruação) para ciclos já completos com
+  // temperatura suficiente registrada — usada para ajustar a previsão de ovulação futura.
+  function cycleLutealLengths(){
+    const starts = (settings.cycle.periodStarts||[]).slice().sort();
+    const dayMs = 86400000;
+    const lengths = [];
+    for(let i=0;i<starts.length-1;i++){
+      const s = new Date(starts[i]+'T00:00:00');
+      const e = new Date(starts[i+1]+'T00:00:00');
+      const shift = detectOvulationShift(s, e);
+      if(shift){
+        const len = Math.round((e - shift.ovulationDate)/dayMs);
+        if(len>=8 && len<=18) lengths.push(len); // faixa fisiológica plausível da fase lútea
+      }
+    }
+    return lengths;
+  }
+
+  function cycleAvgLuteal(){
+    const lens = cycleLutealLengths();
+    if(!lens.length) return 14; // padrão usado quando não há temperatura suficiente registrada
+    return Math.round(lens.reduce((a,b)=>a+b,0)/lens.length);
+  }
+
+  function cycleComputeAvgLength(){
+    const starts = (settings.cycle.periodStarts||[]).slice().sort();
+    if(starts.length < 2) return settings.cycle.avgCycleLength || 28;
+    const diffs = [];
+    for(let i=1;i<starts.length;i++){
+      const d1 = new Date(starts[i-1]+'T00:00:00');
+      const d2 = new Date(starts[i]+'T00:00:00');
+      diffs.push(Math.round((d2-d1)/86400000));
+    }
+    const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+    return Math.round(avg);
+  }
+
+  function cycleDayInfo(dateObj){
+    if(!settings.cycle || !settings.cycle.enabled) return null;
+    const starts = (settings.cycle.periodStarts||[]).slice().sort();
+    if(starts.length === 0) return null;
+    const dayMs = 86400000;
+    const cycleLen = cycleComputeAvgLength();
+    const periodLen = settings.cycle.avgPeriodLength || 5;
+    const lastStart = new Date(starts[starts.length-1]+'T00:00:00');
+    const target = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+
+    // 1) dias já registrados de verdade (dado real, não previsão)
+    for(const s of starts){
+      const sd = new Date(s+'T00:00:00');
+      const diffDays = Math.round((target-sd)/dayMs);
+      if(diffDays >= 0 && diffDays < periodLen) return { type:'period', label:'menstruação' };
+    }
+
+    // 1.5) dentro de um ciclo já iniciado: se houver temperatura suficiente, confirma
+    // (em vez de apenas prever) o dia real de ovulação e marca o restante como não-ovulação
+    for(let i=0;i<starts.length;i++){
+      const s = new Date(starts[i]+'T00:00:00');
+      const e = (i+1<starts.length) ? new Date(starts[i+1]+'T00:00:00') : new Date(Math.max(Date.now(), target.getTime())+dayMs);
+      if(target < s || target >= e) continue;
+      const shift = detectOvulationShift(s, e);
+      if(shift){
+        const diffOvu = Math.round((target - shift.ovulationDate)/dayMs);
+        if(diffOvu === 0) return { type:'ovulation', confirmed:true, label:'ovulação (confirmada pela temperatura)' };
+        return { type:'nonovulation', confirmed:true, label:'fora do período fértil (confirmado pela temperatura)' };
+      }
+      break;
+    }
+
+    // 2) projeta ciclos a partir do último início registrado
+    const diffFromLast = Math.round((target - lastStart)/dayMs);
+    const cycleIndex = Math.round(diffFromLast / cycleLen);
+    const projectedStart = new Date(lastStart.getTime() + cycleIndex*cycleLen*dayMs);
+    const daysSinceProjStart = Math.round((target - projectedStart)/dayMs);
+
+    if(daysSinceProjStart >= 0 && daysSinceProjStart < periodLen){
+      return { type:'period', label:'menstruação (previsão)' };
+    }
+
+    const LEAD = 5;
+    if(daysSinceProjStart < 0 && daysSinceProjStart >= -LEAD){
+      const intensity = (LEAD + daysSinceProjStart + 1) / LEAD;
+      return { type:'approaching', intensity, label:'chegando perto do início do ciclo' };
+    }
+
+    let nextStart = projectedStart;
+    if(daysSinceProjStart >= periodLen) nextStart = new Date(projectedStart.getTime() + cycleLen*dayMs);
+    const luteal = cycleAvgLuteal();
+    const ovulationDate = new Date(nextStart.getTime() - luteal*dayMs);
+    const diffOvu = Math.round((target-ovulationDate)/dayMs);
+    if(diffOvu === 0){
+      return { type:'ovulation', label: luteal!==14 ? 'ovulação (previsão ajustada pela sua temperatura)' : 'ovulação (previsão)' };
+    }
+
+    return null;
+  }
+
+  function cycleIconMarkup(dayInfo, size){
+    size = size || 13;
+    if(!dayInfo) return '';
+    if(dayInfo.type === 'ovulation'){
+      const stroke = dayInfo.confirmed ? '#7a2e2e' : '#c9a24a';
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="cycle-svg"><ellipse cx="12" cy="13" rx="6.5" ry="8.5" fill="#f3dfa8" stroke="${stroke}" stroke-width="1"/></svg>`;
+    }
+    if(dayInfo.type === 'period' || dayInfo.type === 'approaching'){
+      const color = dayInfo.type === 'period' ? '#a10f0f' : lerpColor('#ecd3d3', '#a10f0f', dayInfo.intensity || 0);
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="cycle-svg"><path d="M12 2 C12 2 5 12 5 16.5 A7 7 0 0 0 19 16.5 C19 12 12 2 12 2 Z" fill="${color}"/></svg>`;
+    }
+    return '';
+  }
+
+  function cycleStatusToday(){
+    const info = cycleDayInfo(new Date());
+    if(!info) return 'Sem previsão para hoje ainda — registre o início do seu ciclo.';
+    if(info.type === 'period') return 'Hoje é um dia de menstruação (real ou prevista).';
+    if(info.type === 'ovulation') return info.confirmed ? 'Hoje é o dia de ovulação, confirmado pela sua temperatura basal.' : 'Hoje é o dia previsto de ovulação.';
+    if(info.type === 'nonovulation') return 'Hoje está fora do período fértil, confirmado pela sua temperatura basal.';
+    if(info.type === 'approaching') return 'Faltam poucos dias para o início previsto do ciclo.';
+    return 'Fora dos dias de menstruação ou ovulação previstos.';
+  }
+
+  function renderCyclePanel(){
+    const content = document.getElementById('cycleContent');
+    if(!content) return;
+    if(!settings.cycle.enabled){
+      content.innerHTML = `
+        <p class="lw-status">Acompanhe as fases do seu ciclo direto no calendário: gota fica mais vermelha perto da menstruação, e o óvulo marca o dia previsto de ovulação. Fica guardado só neste diário, no seu dispositivo.</p>
+        <button type="button" class="mood-edit-btn" id="cycleEnableBtn">ativar ciclo menstrual</button>
+      `;
+      document.getElementById('cycleEnableBtn').onclick = ()=>{
+        settings.cycle.enabled = true;
+        saveSettings();
+        renderCyclePanel();
+        renderCalendar(document.getElementById('recallContent'));
+      };
+      return;
+    }
+    const starts = (settings.cycle.periodStarts||[]).slice().sort();
+    const cycleLen = cycleComputeAvgLength();
+    const lutealLens = cycleLutealLengths();
+    const todayStr = dayKeyIso(new Date());
+    const todayTempC = getTemperatureForDate(todayStr);
+    const unit = settings.cycle.tempUnit || 'c';
+    const todayTempDisplay = todayTempC!=null ? tempCtoDisplay(todayTempC, unit).toFixed(1) : '';
+    content.innerHTML = `
+      <p class="lw-status">${cycleStatusToday()}</p>
+      <div class="cycle-fields">
+        <label>duração média do ciclo <input type="number" id="cycleLenInput" min="15" max="60" value="${settings.cycle.avgCycleLength}"> dias</label>
+        <label>duração da menstruação <input type="number" id="cyclePeriodLenInput" min="1" max="15" value="${settings.cycle.avgPeriodLength}"> dias</label>
+      </div>
+      ${starts.length>=2 ? `<p class="lw-weather-meta">média calculada pelo seu histórico: ${cycleLen} dias (usada nas previsões em vez do valor manual)</p>` : ''}
+      <p class="lw-weather-meta">${starts.length ? `${starts.length} ciclo(s) registrado(s) · último início: ${new Date(starts[starts.length-1]+'T00:00:00').toLocaleDateString('pt-BR')}` : 'Nenhum início de ciclo registrado ainda.'}</p>
+      <div class="cycle-actions">
+        <button type="button" class="mood-edit-btn" id="cycleLogTodayBtn">marcar hoje como início da menstruação</button>
+        <button type="button" class="mood-edit-btn" id="cycleDisableBtn">desativar</button>
+      </div>
+      <div class="temp-panel">
+        <div class="temp-panel-head">🌡 temperatura corporal (basal)</div>
+        <div class="temp-input-row">
+          <div class="temp-preview" id="tempPreview">${todayTempC!=null ? tempIconMarkup(todayTempC, 22) : tempIconMarkup(36.5, 22)}</div>
+          <input type="number" step="0.1" id="tempTodayInput" placeholder="ex: 36.4" value="${todayTempDisplay}">
+          <select class="temp-unit-select" id="tempUnitSelect">
+            <option value="c" ${unit==='c'?'selected':''}>°C</option>
+            <option value="f" ${unit==='f'?'selected':''}>°F</option>
+          </select>
+          <button type="button" class="mood-edit-btn" id="tempSaveBtn">guardar temperatura de hoje</button>
+        </div>
+        <div class="temp-scale"><span class="temp-scale-bar"></span></div>
+        <p class="lw-weather-meta">O termômetro muda de amarelo para laranja e vermelho conforme a temperatura sobe. Registre todo dia, de preferência ao acordar, para o diário reconhecer o pequeno salto de temperatura que costuma indicar que a ovulação já aconteceu.</p>
+        ${lutealLens.length ? `<p class="lw-weather-meta">${lutealLens.length} ciclo(s) com temperatura suficiente para confirmar a ovulação · isso está sendo usado para ajustar as próximas previsões.</p>` : `<p class="lw-weather-meta">Ainda não há temperatura suficiente em um ciclo completo para confirmar a ovulação — enquanto isso, o diário usa a previsão padrão (14 dias antes da próxima menstruação).</p>`}
+      </div>
+    `;
+    document.getElementById('cycleLenInput').addEventListener('change', (e)=>{
+      settings.cycle.avgCycleLength = parseInt(e.target.value) || 28;
+      saveSettings();
+      renderCalendar(document.getElementById('recallContent'));
+    });
+    document.getElementById('cyclePeriodLenInput').addEventListener('change', (e)=>{
+      settings.cycle.avgPeriodLength = parseInt(e.target.value) || 5;
+      saveSettings();
+      renderCalendar(document.getElementById('recallContent'));
+    });
+    document.getElementById('cycleLogTodayBtn').onclick = ()=>{
+      const todayStr = dayKeyIso(new Date());
+      if(!settings.cycle.periodStarts.includes(todayStr)){
+        settings.cycle.periodStarts.push(todayStr);
+        settings.cycle.periodStarts.sort();
+      }
+      saveSettings();
+      renderCalendar(document.getElementById('recallContent'));
+    };
+    document.getElementById('cycleDisableBtn').onclick = ()=>{
+      settings.cycle.enabled = false;
+      saveSettings();
+      renderCalendar(document.getElementById('recallContent'));
+    };
+    const tempInput = document.getElementById('tempTodayInput');
+    const tempUnitSelect = document.getElementById('tempUnitSelect');
+    const tempPreview = document.getElementById('tempPreview');
+    const updateTempPreview = ()=>{
+      const raw = parseFloat(tempInput.value);
+      const c = isNaN(raw) ? 36.5 : tempToC(raw, tempUnitSelect.value);
+      tempPreview.innerHTML = tempIconMarkup(c, 22);
+    };
+    tempInput.addEventListener('input', updateTempPreview);
+    tempUnitSelect.addEventListener('change', updateTempPreview);
+    document.getElementById('tempSaveBtn').onclick = ()=>{
+      const raw = tempInput.value;
+      if(raw===''){ return; }
+      settings.cycle.tempUnit = tempUnitSelect.value;
+      setTemperatureForDate(dayKeyIso(new Date()), raw, tempUnitSelect.value);
+      renderCyclePanel();
+      renderCalendar(document.getElementById('recallContent'));
+    };
+  }
+
+  function dayKeyIso(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  // ---- medicamentos contraceptivos (descrição manual + lembrete + previsão da próxima dose) ----
+  const MED_UNIT_MS = { horas:3600000, dias:86400000, semanas:7*86400000, meses:30*86400000 };
+  const MED_UNIT_LABEL = { horas:'hora(s)', dias:'dia(s)', semanas:'semana(s)', meses:'mês(es)' };
+
+  function formatDateTimeBR(d){
+    if(!d || isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return `${dd}/${mm}/${yyyy} às ${hh}:${mi}`;
+  }
+
+  function medIntervalMs(med){
+    const n = parseFloat(med.intervalValue);
+    if(!n || n<=0) return 0;
+    return n * (MED_UNIT_MS[med.intervalUnit] || MED_UNIT_MS.dias);
+  }
+
+  // Próxima dose a partir de agora (ou a partir da última aplicação, se ainda no futuro)
+  function medNextDose(med, fromDate){
+    fromDate = fromDate || new Date();
+    if(!med.lastApplication) return null;
+    const last = new Date(med.lastApplication);
+    if(isNaN(last.getTime())) return null;
+    const intervalMs = medIntervalMs(med);
+    if(intervalMs<=0) return null;
+    let n = Math.ceil((fromDate.getTime() - last.getTime()) / intervalMs);
+    if(n < 1) n = 1;
+    return new Date(last.getTime() + n*intervalMs);
+  }
+
+  // Lista das próximas N doses previstas, em sequência, a partir de agora
+  function medUpcomingDoses(med, count){
+    count = count || 3;
+    const first = medNextDose(med);
+    if(!first) return [];
+    const intervalMs = medIntervalMs(med);
+    const out = [first];
+    for(let i=1;i<count;i++) out.push(new Date(first.getTime() + i*intervalMs));
+    return out;
+  }
+
+  // Doses previstas dentro de um intervalo de datas (usado para marcar o calendário do mês)
+  function medDoseDatesInRange(med, rangeStart, rangeEnd){
+    if(!med.lastApplication) return [];
+    const last = new Date(med.lastApplication);
+    if(isNaN(last.getTime())) return [];
+    const intervalMs = medIntervalMs(med);
+    if(intervalMs<=0) return [];
+    let n = Math.ceil((rangeStart.getTime() - last.getTime()) / intervalMs);
+    if(n < 1) n = 1;
+    const out = [];
+    let d = new Date(last.getTime() + n*intervalMs);
+    while(d.getTime() <= rangeEnd.getTime()){
+      out.push(new Date(d));
+      n++;
+      d = new Date(last.getTime() + n*intervalMs);
+    }
+    return out;
+  }
+
+  function medStatus(med){
+    const next = medNextDose(med);
+    if(!next) return { level:'ok', label:'defina a última aplicação e o intervalo entre doses.' };
+    const now = new Date();
+    const diffH = (next.getTime()-now.getTime())/3600000;
+    if(diffH <= 0) return { level:'overdue', label:`dose atrasada — estava prevista para ${formatDateTimeBR(next)}.` };
+    if(diffH <= 24) return { level:'soon', label:`próxima dose em breve: ${formatDateTimeBR(next)}.` };
+    return { level:'ok', label:`próxima dose: ${formatDateTimeBR(next)}.` };
+  }
+
+  function medDayMap(rangeStart, rangeEnd){
+    const map = {};
+    (settings.contraceptives||[]).forEach(med=>{
+      medDoseDatesInRange(med, rangeStart, rangeEnd).forEach(d=>{
+        const key = dayKeyIso(d);
+        (map[key] = map[key] || []).push({ med, date:d });
+      });
+    });
+    return map;
+  }
+
+  function addContraceptive(){
+    const desc = document.getElementById('medDescInput').value.trim();
+    const lastAppRaw = document.getElementById('medLastAppInput').value;
+    const intervalValue = document.getElementById('medIntervalValueInput').value;
+    const intervalUnit = document.getElementById('medIntervalUnitInput').value;
+    const reminderEnabled = document.getElementById('medReminderInput').checked;
+    if(!desc){ flashStatus && flashStatus('Descreva o medicamento antes de guardar.'); return; }
+    const med = {
+      id: uid(),
+      description: desc,
+      lastApplication: lastAppRaw || null,
+      intervalValue: intervalValue || '',
+      intervalUnit: intervalUnit || 'dias',
+      reminderEnabled: !!reminderEnabled,
+      notifiedFor: null,
+    };
+    settings.contraceptives.push(med);
+    if(reminderEnabled) requestNotifyPermission();
+    saveSettings();
+    renderContraceptionPanel();
+    renderCalendar(document.getElementById('recallContent'));
+  }
+
+  function deleteContraceptive(id){
+    settings.contraceptives = (settings.contraceptives||[]).filter(m=>m.id!==id);
+    saveSettings();
+    renderContraceptionPanel();
+    renderCalendar(document.getElementById('recallContent'));
+  }
+
+  function toggleContraceptiveReminder(id, enabled){
+    const med = (settings.contraceptives||[]).find(m=>m.id===id);
+    if(!med) return;
+    med.reminderEnabled = enabled;
+    if(enabled) requestNotifyPermission();
+    saveSettings();
+  }
+
+  function updateContraceptiveLastApp(id, value){
+    const med = (settings.contraceptives||[]).find(m=>m.id===id);
+    if(!med) return;
+    med.lastApplication = value || null;
+    med.notifiedFor = null;
+    saveSettings();
+    renderContraceptionPanel();
+    renderCalendar(document.getElementById('recallContent'));
+  }
+
+  function requestNotifyPermission(){
+    if(typeof Notification === 'undefined') return;
+    if(Notification.permission === 'default') Notification.requestPermission();
+  }
+
+  // Roda a cada minuto enquanto o diário está aberto: dispara um lembrete quando uma dose
+  // com lembrete ativado chega na hora marcada. Como é uma página local, isso só funciona
+  // com o diário aberto no navegador — não há aviso em segundo plano com a aba fechada.
+  function checkDueContraceptiveReminders(){
+    const now = new Date();
+    let changed = false;
+    (settings.contraceptives||[]).forEach(med=>{
+      if(!med.reminderEnabled || !med.lastApplication) return;
+      const next = medNextDose(med, new Date(now.getTime() - 60000));
+      if(!next) return;
+      const key = next.toISOString();
+      if(med.notifiedFor === key) return;
+      if(now.getTime() >= next.getTime() && now.getTime() - next.getTime() < 5*60000){
+        med.notifiedFor = key;
+        changed = true;
+        const title = 'Lembrete de contraceptivo';
+        const body = `${med.description} — dose prevista para ${formatDateTimeBR(next)}.`;
+        if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+          try{ new Notification(title, { body }); }catch(e){}
+        }
+        flashSecurityStatus && flashSecurityStatus('💊 ' + body);
+      }
+    });
+    if(changed) saveSettings();
+  }
+
+  function renderContraceptionPanel(){
+    const content = document.getElementById('contraceptionContent');
+    if(!content) return;
+    const meds = settings.contraceptives || [];
+    const listHtml = meds.length ? `<div class="med-list">${meds.map(med=>{
+      const status = medStatus(med);
+      const upcoming = medUpcomingDoses(med, 3);
+      return `
+        <div class="med-card" data-id="${med.id}">
+          <div class="med-card-head">
+            <div class="med-card-name">${med.description}</div>
+            <button type="button" class="med-card-del" data-del="${med.id}" title="remover">✕</button>
+          </div>
+          <div class="med-card-meta">última aplicação: ${med.lastApplication ? formatDateTimeBR(new Date(med.lastApplication)) : 'não informada'} · a cada ${med.intervalValue || '?'} ${MED_UNIT_LABEL[med.intervalUnit] || med.intervalUnit}</div>
+          <div class="med-status ${status.level}">${status.level==='overdue'?'⚠ ':status.level==='soon'?'⏰ ':'💊 '}${status.label}</div>
+          ${upcoming.length ? `<ul class="med-next-list">${upcoming.map(d=>`<li>· ${formatDateTimeBR(d)}</li>`).join('')}</ul>` : ''}
+          <div class="med-card-row">
+            <label>atualizar última aplicação <input type="datetime-local" data-lastapp="${med.id}" value="${med.lastApplication || ''}"></label>
+            <label><input type="checkbox" data-reminder="${med.id}" ${med.reminderEnabled?'checked':''}> lembrete ativado</label>
+          </div>
+        </div>
+      `;
+    }).join('')}</div>` : `<p class="lw-status">Nenhum medicamento contraceptivo registrado ainda.</p>`;
+
+    content.innerHTML = `
+      ${listHtml}
+      <div class="med-form">
+        <p class="lw-weather-meta">Adicione a descrição do medicamento (nome, dose, via de uso), quando foi a última aplicação e de quanto em quanto tempo ele deve ser repetido. O diário calcula e mostra a previsão das próximas doses, e pode avisar quando chegar a hora — desde que o diário esteja aberto no navegador.</p>
+        <div class="med-form-row">
+          <input type="text" id="medDescInput" placeholder="descrição do medicamento (ex: injetável trimestral 150mg)">
+          <input type="datetime-local" id="medLastAppInput" title="data e hora da última aplicação">
+        </div>
+        <div class="med-form-row">
+          <div class="med-interval-row">
+            <span style="font-size:.78rem;color:var(--ink-dim);">repetir a cada</span>
+            <input type="number" min="0.5" step="0.5" id="medIntervalValueInput" value="1">
+            <select id="medIntervalUnitInput">
+              <option value="horas">hora(s)</option>
+              <option value="dias" selected>dia(s)</option>
+              <option value="semanas">semana(s)</option>
+              <option value="meses">mês(es)</option>
+            </select>
+          </div>
+          <label style="font-size:.78rem;color:var(--ink-dim);display:flex;align-items:center;gap:.4rem;"><input type="checkbox" id="medReminderInput"> ativar lembrete</label>
+        </div>
+        <div>
+          <button type="button" class="mood-edit-btn" id="medAddBtn">adicionar medicamento</button>
+        </div>
+      </div>
+    `;
+    content.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.onclick = ()=> deleteContraceptive(btn.dataset.del);
+    });
+    content.querySelectorAll('[data-reminder]').forEach(chk=>{
+      chk.onchange = ()=> toggleContraceptiveReminder(chk.dataset.reminder, chk.checked);
+    });
+    content.querySelectorAll('[data-lastapp]').forEach(inp=>{
+      inp.onchange = ()=> updateContraceptiveLastApp(inp.dataset.lastapp, inp.value);
+    });
+    const addBtn = document.getElementById('medAddBtn');
+    if(addBtn) addBtn.onclick = addContraceptive;
+  }
+
+  function calcStreak(){
+    const daysWithEntry = new Set(entries.map(e=>dayKey(new Date(e.createdAt))));
+    if(daysWithEntry.size===0) return 0;
+    let streak = 0;
+    let cursor = new Date();
+    if(!daysWithEntry.has(dayKey(cursor))) cursor.setDate(cursor.getDate()-1);
+    while(daysWithEntry.has(dayKey(cursor))){
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    }
+    return streak;
+  }
+
+  function renderCalendar(el){
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    const monthNames = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const dows = ['D','S','T','Q','Q','S','S'];
+    const firstDay = new Date(year, month, 1);
+    const startOffset = firstDay.getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const today = new Date();
+
+    const entriesByDay = {};
+    entries.forEach(e=>{
+      const d = new Date(e.createdAt);
+      if(d.getFullYear()===year && d.getMonth()===month){
+        const day = d.getDate();
+        (entriesByDay[day] = entriesByDay[day] || []).push(e);
+      }
+    });
+
+    // ---- estatísticas de rotina (formas de checagem) ----
+    const isCurrentMonth = today.getFullYear()===year && today.getMonth()===month;
+    const daysElapsed = isCurrentMonth ? today.getDate() : daysInMonth;
+    const daysWritten = Object.keys(entriesByDay).length;
+    const pct = daysElapsed ? Math.round((daysWritten/daysElapsed)*100) : 0;
+    const streak = calcStreak();
+
+    const medRangeStart = new Date(year, month, 1, 0, 0, 0);
+    const medRangeEnd = new Date(year, month, daysInMonth, 23, 59, 59);
+    const medMap = medDayMap(medRangeStart, medRangeEnd);
+
+    let grid = '<div class="cal-grid">';
+    dows.forEach(d=>grid += `<div class="cal-dow">${d}</div>`);
+    for(let i=0;i<startOffset;i++) grid += '<div class="cal-day"></div>';
+    for(let day=1; day<=daysInMonth; day++){
+      const count = entriesByDay[day] ? entriesByDay[day].length : 0;
+      const has = count>0;
+      const intensity = count>=3 ? ' entries-3plus' : count===2 ? ' entries-2' : '';
+      const dots = has ? '<span class="cal-day-dots">' + '●'.repeat(Math.min(count,3)) + '</span>' : '';
+      const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===day;
+      const isSel = calSelected && calSelected.y===year && calSelected.m===month && calSelected.d===day;
+      const { fraction } = moonPhase(new Date(year, month, day, 12));
+      const { name: moonName } = moonPhaseInfo(fraction);
+      const moonIcon = `<span class="cal-day-moon" title="${moonName}">${moonSvg(fraction, 13)}</span>`;
+      const cInfo = cycleDayInfo(new Date(year, month, day, 12));
+      const cycleIcon = cInfo ? `<span class="cal-day-cycle" title="${cInfo.label}">${cycleIconMarkup(cInfo, 13)}</span>` : '';
+      const dayTempC = settings.cycle.enabled ? getTemperatureForDate(dayKeyIso(new Date(year, month, day))) : null;
+      const tempIcon = dayTempC!=null ? `<span class="cal-day-temp" title="temperatura: ${formatTemp(dayTempC)}">${tempIconMarkup(dayTempC, 13)}</span>` : '';
+      const medDoses = medMap[dayKeyIso(new Date(year, month, day))];
+      const medTitle = medDoses ? medDoses.map(m=>`${m.med.description} (${formatDateTimeBR(m.date)})`).join(' · ') : '';
+      const medIcon = medDoses ? `<span class="cal-day-med" title="dose prevista: ${medTitle}">💊</span>` : '';
+      grid += `<div class="cal-day${has?' has-entry':''}${intensity}${isToday?' today':''}${isSel?' selected':''}" data-day="${day}" title="${count} ${count===1?'entrada':'entradas'} · ${moonName}${cInfo ? ' · '+cInfo.label : ''}${dayTempC!=null ? ' · temperatura: '+formatTemp(dayTempC) : ''}${medDoses ? ' · dose prevista: '+medTitle : ''}">${moonIcon}${cycleIcon}${tempIcon}${medIcon}<span class="cal-day-num">${day}</span>${dots}</div>`;
+    }
+    grid += '</div>';
+
+    const todayMoon = moonPhase(today);
+    const todayMoonInfo = moonPhaseInfo(todayMoon.fraction);
+
+    el.innerHTML = `
+      <div class="cal-stats">
+        <span class="cal-stat">🔥 sequência atual: <b>${streak} ${streak===1?'dia':'dias'}</b></span>
+        <span class="cal-stat">${monthNames[month]}: <b>${daysWritten}/${daysElapsed}</b> dias registrados
+          <span class="cal-stat-bar"><span class="cal-stat-bar-fill" style="width:${Math.min(pct,100)}%;"></span></span>
+          <b>${pct}%</b>
+        </span>
+      </div>
+      <div class="moon-today-panel">
+        ${moonSvg(todayMoon.fraction, 40)}
+        <div>
+          <div class="moon-today-name">${todayMoonInfo.name} hoje</div>
+          <div class="moon-today-illum">${todayMoonInfo.illumPct}% iluminada</div>
+        </div>
+      </div>
+      <div class="tide-panel" id="cyclePanel">
+        <div class="tide-panel-head">🌸 Ciclo menstrual</div>
+        <div id="cycleContent"></div>
+      </div>
+      <div class="tide-panel" id="contraceptionPanel">
+        <div class="tide-panel-head">💊 Contracepção</div>
+        <div id="contraceptionContent"></div>
+      </div>
+      <div class="tide-panel" id="weatherPanel">
+        <div class="tide-panel-head">☀ Clima local</div>
+        <div id="weatherContent"></div>
+      </div>
+      <div class="tide-panel" id="tidePanel">
+        <div class="tide-panel-head">🌊 Tábua de marés</div>
+        <div id="tideContent"></div>
+      </div>
+      <div class="cal-head">
+        <button class="cal-nav" id="calPrev">←</button>
+        <span class="cal-title">${monthNames[month]} de ${year}</span>
+        <button class="cal-nav" id="calNext">→</button>
+      </div>
+      ${grid}
+      <div class="cal-legend">
+        <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--card-2);"></span>1 entrada</span>
+        <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:color-mix(in srgb, var(--sage-dim) 40%, var(--card-2));"></span>2 entradas</span>
+        <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:color-mix(in srgb, var(--sage-dim) 75%, var(--card-2));"></span>3+ entradas</span>
+        <span class="cal-legend-item">${moonSvg(0, 13)} lua nova</span>
+        <span class="cal-legend-item">${moonSvg(0.5, 13)} lua cheia</span>
+        ${settings.cycle.enabled ? `
+        <span class="cal-legend-item">${cycleIconMarkup({type:'period'}, 13)} menstruação</span>
+        <span class="cal-legend-item">${cycleIconMarkup({type:'ovulation'}, 13)} ovulação (contorno mais escuro = confirmada pela temperatura)</span>
+        <span class="cal-legend-item">${tempIconMarkup(37.2, 13)} temperatura registrada</span>
+        ` : ''}
+        ${(settings.contraceptives||[]).length ? `<span class="cal-legend-item">💊 dose de medicamento prevista</span>` : ''}
+      </div>
+      <div id="calDayEntries" style="margin-top:1rem;"></div>
+    `;
+    document.getElementById('calPrev').onclick = ()=>{ calDate = new Date(year, month-1, 1); calSelected=null; renderRecall(); };
+    document.getElementById('calNext').onclick = ()=>{ calDate = new Date(year, month+1, 1); calSelected=null; renderRecall(); };
+    renderCyclePanel();
+    renderContraceptionPanel();
+    renderWeatherCol();
+    renderTideCol();
+    el.querySelectorAll('.cal-day.has-entry').forEach(cell=>{
+      cell.onclick = ()=>{
+        const day = parseInt(cell.dataset.day);
+        calSelected = {y:year, m:month, d:day};
+        renderRecall();
+        document.getElementById('calDayEntries').innerHTML = entriesByDay[day].map(entryCardHtml).join('');
+        bindDeletes(document.getElementById('calDayEntries'));
+      };
+    });
+    if(calSelected && calSelected.y===year && calSelected.m===month && entriesByDay[calSelected.d]){
+      document.getElementById('calDayEntries').innerHTML = entriesByDay[calSelected.d].map(entryCardHtml).join('');
+      bindDeletes(document.getElementById('calDayEntries'));
+    }
+  }
+
+  function dateVariants(e){
+    const d = new Date(e.createdAt);
+    return [
+      d.toLocaleDateString('pt-BR'),                                            // 15/03/2024
+      d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}),           // 15/03
+      d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}), // 15 de março de 2024
+      d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long'}),              // 15 de março
+      d.toLocaleDateString('pt-BR', {month:'long'}),                            // março
+      d.toLocaleDateString('pt-BR', {month:'short'}),                           // mar.
+      d.toLocaleDateString('pt-BR', {weekday:'long'}),                          // sexta-feira
+      String(d.getFullYear()),                                                  // 2024
+      d.toISOString().slice(0,10),                                              // 2024-03-15
+    ].map(v=>v.toLowerCase());
+  }
+
+  function renderSearch(el){
+    el.innerHTML = `<input type="text" class="search-input" id="searchInput" placeholder="Buscar por palavra, tag ou data (ex: 15/03, março, 2024)...">
+      <div class="search-meta" id="searchMeta"></div>
+      <div id="searchResults"></div>`;
+    const input = document.getElementById('searchInput');
+    const meta = document.getElementById('searchMeta');
+    const results = document.getElementById('searchResults');
+    function doSearch(){
+      const q = input.value.trim().toLowerCase();
+      if(!q){ meta.textContent = ''; results.innerHTML = '<div class="empty-msg">Digite uma palavra ou uma data para buscar.</div>'; return; }
+      const t0 = performance.now();
+      const found = entries.filter(e=>
+        (e.content && e.content.toLowerCase().includes(q)) ||
+        (e.titulo && e.titulo.toLowerCase().includes(q)) ||
+        (e.subtitulo && e.subtitulo.toLowerCase().includes(q)) ||
+        (e.tags && e.tags.some(t=>t.toLowerCase().includes(q))) ||
+        dateVariants(e).some(v=>v.includes(q))
+      );
+      const ms = (performance.now() - t0).toFixed(1);
+      meta.textContent = found.length
+        ? `${found.length} ${found.length===1?'resultado encontrado':'resultados encontrados'} em ${ms}ms`
+        : '';
+      results.innerHTML = found.length ? found.map(e=>entryCardHtml(e, q)).join('') : '<div class="empty-msg">Nada encontrado.</div>';
+      bindDeletes(results);
+    }
+    input.oninput = doSearch;
+    results.innerHTML = '<div class="empty-msg">Digite uma palavra ou uma data para buscar.</div>';
+    setTimeout(()=>input.focus(), 30);
+  }
+
+  function renderOnThisDay(el){
+    const today = new Date();
+    const found = entries.filter(e=>{
+      const d = new Date(e.createdAt);
+      return d.getDate()===today.getDate() && d.getMonth()===today.getMonth() && d.getFullYear()!==today.getFullYear();
+    });
+    el.innerHTML = found.length ? found.map(entryCardHtml).join('') : '<div class="empty-msg">Ainda não há entradas de outros anos, neste mesmo dia.</div>';
+    bindDeletes(el);
+  }
+
+  function renderRandom(el){
+    if(entries.length===0){ el.innerHTML = '<div class="empty-msg">Nada guardado ainda para sortear.</div>'; return; }
+    if(randomIdx===null || randomIdx>=entries.length) randomIdx = Math.floor(Math.random()*entries.length);
+    el.innerHTML = `<div class="otd-nav"><button class="save-btn" id="anotherBtn" style="background:var(--card-2);color:var(--ink);">Outra lembrança</button></div>` + entryCardHtml(entries[randomIdx]);
+    bindDeletes(el);
+    document.getElementById('anotherBtn').onclick = ()=>{
+      randomIdx = Math.floor(Math.random()*entries.length);
+      renderRandom(el);
+    };
+  }
+
+  /* ---- exportar ---- */
+  function downloadFile(filename, content, mime){
+    const blob = new Blob([content], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function flashExportStatus(msg){
+    const el = document.getElementById('exportStatus');
+    el.textContent = msg;
+    setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 3000);
+  }
+
+  function sortedEntries(){
+    return [...entries].sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt));
+  }
+
+  function exportAsJson(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    const payload = { exportedAt: new Date().toISOString(), settings, entries };
+    downloadFile('diario-backup-'+dateStamp()+'.json', JSON.stringify(payload, null, 2), 'application/json');
+    flashExportStatus('Backup baixado.');
+  }
+
+  function dateStamp(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function exportAsTxt(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    const moodMap = Object.fromEntries(moods.map(m=>[m.id, m.label]));
+    const modeLabel = {texto:'texto', perguntas:'pergunta guiada', humor:'humor', gratidao:'gratidão', foto:'foto'};
+    let out = 'DIÁRIO\nExportado em ' + new Date().toLocaleString('pt-BR') + '\n\n';
+    sortedEntries().forEach(e=>{
+      const d = new Date(e.createdAt);
+      const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}) + ' às ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      out += '─────────────────────────────\n';
+      out += dateStr + '  ·  ' + (modeLabel[e.mode] || e.mode) + (e.mood ? '  ·  humor: ' + moodMap[e.mood] : '') + '\n';
+      if(e.titulo) out += '\n' + e.titulo + '\n';
+      if(e.subtitulo) out += e.subtitulo + '\n';
+      if(e.prompt) out += '\n"' + e.prompt + '"\n';
+      if(e.content) out += '\n' + e.content + '\n';
+      if(e.tags && e.tags.length) out += '\nTags: ' + e.tags.join(', ') + '\n';
+      out += '\n';
+    });
+    downloadFile('diario-'+dateStamp()+'.txt', out, 'text/plain;charset=utf-8');
+    flashExportStatus('Texto baixado.');
+  }
+
+  function exportAsPdf(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    const printArea = document.getElementById('printArea');
+    let html = '<h1 style="font-family:var(--font-heading);color:var(--sage);">Diário</h1>';
+    sortedEntries().forEach(e=>{ html += entryCardHtml(e); });
+    printArea.innerHTML = html;
+    window.print();
+  }
+
+  function buildMarkdown(){
+    const moodMap = Object.fromEntries(moods.map(m=>[m.id, m.em+' '+m.label]));
+    const modeLabel = {texto:'texto', perguntas:'pergunta guiada', humor:'humor', gratidao:'gratidão', foto:'foto'};
+    let out = '# Diário\n\n_Exportado em ' + new Date().toLocaleString('pt-BR') + '_\n\n';
+    sortedEntries().forEach(e=>{
+      const d = new Date(e.createdAt);
+      const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}) + ' às ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      out += '---\n\n';
+      out += '## ' + (e.titulo ? e.titulo : dateStr) + '\n\n';
+      if(e.titulo) out += '*' + dateStr + '*\n\n';
+      out += '`' + (modeLabel[e.mode] || e.mode) + (e.mood ? ' · ' + moodMap[e.mood] : '') + '`\n\n';
+      if(e.subtitulo) out += '**' + e.subtitulo + '**\n\n';
+      if(e.prompt) out += '> ' + e.prompt + '\n\n';
+      if(e.content) out += e.content.split('\n').join('\n\n') + '\n\n';
+      if(e.tags && e.tags.length) out += e.tags.map(t=>'#'+t.replace(/\s+/g,'-')).join(' ') + '\n\n';
+    });
+    return out;
+  }
+
+  function exportAsMarkdown(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    downloadFile('diario-'+dateStamp()+'.md', buildMarkdown(), 'text/markdown;charset=utf-8');
+    flashExportStatus('Markdown baixado.');
+  }
+
+  async function copyForPaste(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    const md = buildMarkdown();
+    try{
+      await navigator.clipboard.writeText(md);
+      flashExportStatus('Copiado! Agora é só colar no Notion, Docs, etc.');
+    }catch(err){
+      downloadFile('diario-'+dateStamp()+'.md', md, 'text/markdown;charset=utf-8');
+      flashExportStatus('Não consegui copiar automaticamente — baixei o .md em vez disso.');
+    }
+  }
+
+  async function exportAsZip(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    if(typeof JSZip==='undefined'){
+      flashExportStatus('Precisa de internet na primeira vez, para carregar o compactador.');
+      return;
+    }
+    flashExportStatus('Preparando o .zip…');
+    const zip = new JSZip();
+    const used = new Set();
+    sortedEntries().forEach(e=>{
+      let name = entryFilename(e);
+      while(used.has(name)){ name = name.replace('.md', '-'+Math.random().toString(36).slice(2,5)+'.md'); }
+      used.add(name);
+      zip.file(name, entryToMarkdown(e));
+    });
+    try{
+      const blob = await zip.generateAsync({type:'blob'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'diario-notas-'+dateStamp()+'.zip';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      flashExportStatus('Pasta de notas baixada — ' + entries.length + ' arquivos.');
+    }catch(err){
+      flashExportStatus('Não consegui gerar o .zip.');
+    }
+  }
+
+  function csvEsc(v){
+    const s = String(v==null ? '' : v).replace(/"/g,'""');
+    return '"' + s + '"';
+  }
+
+  function exportAsCsv(){
+    if(entries.length===0){ flashExportStatus('Nada para exportar ainda.'); return; }
+    const moodMap = Object.fromEntries(moods.map(m=>[m.id, m.label]));
+    const modeLabel = {texto:'texto', perguntas:'pergunta guiada', humor:'humor', gratidao:'gratidão', foto:'foto'};
+    const headers = ['id','data','hora','modo','humor','titulo','subtitulo','pergunta','conteudo','tags'];
+    const rows = [headers.map(csvEsc).join(',')];
+    sortedEntries().forEach(e=>{
+      const d = new Date(e.createdAt);
+      rows.push([
+        e.id,
+        d.toLocaleDateString('pt-BR'),
+        d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
+        modeLabel[e.mode] || e.mode,
+        e.mood ? moodMap[e.mood] : '',
+        e.titulo || '',
+        e.subtitulo || '',
+        e.prompt || '',
+        e.content || '',
+        (e.tags||[]).join('; '),
+      ].map(csvEsc).join(','));
+    });
+    downloadFile('diario-'+dateStamp()+'.csv', '\uFEFF'+rows.join('\r\n'), 'text/csv;charset=utf-8');
+    flashExportStatus('Planilha baixada.');
+  }
+
+  function flashImportStatus(msg){
+    const el = document.getElementById('importStatus');
+    el.textContent = msg;
+    setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 4500);
+  }
+
+  async function importJsonFile(file){
+    if(!file) return;
+    let payload;
+    try{
+      const text = await file.text();
+      payload = JSON.parse(text);
+    }catch(e){
+      flashImportStatus('Arquivo inválido — não parece um backup deste diário.');
+      return;
+    }
+    const incoming = Array.isArray(payload.entries) ? payload.entries
+      : Array.isArray(payload) ? payload
+      : null;
+    if(!incoming){
+      flashImportStatus('Não encontrei entradas nesse arquivo.');
+      return;
+    }
+    const existingIds = new Set(entries.map(e=>e.id));
+    let added = 0;
+    incoming.forEach(e=>{
+      if(!e || typeof e!=='object') return;
+      if(!e.id) e.id = uid();
+      if(existingIds.has(e.id)) return;
+      existingIds.add(e.id);
+      entries.push(e);
+      added++;
+    });
+    if(added===0){
+      flashImportStatus('Nada novo — todas as entradas desse backup já estão aqui.');
+      return;
+    }
+    await persist();
+    renderRecall();
+    flashImportStatus('Importado! ' + added + ' entrada(s) nova(s) adicionada(s).');
+  }
+
+  document.getElementById('exportJsonBtn').onclick = exportAsJson;
+  document.getElementById('exportTxtBtn').onclick = exportAsTxt;
+  document.getElementById('exportPdfBtn').onclick = exportAsPdf;
+  document.getElementById('exportMdBtn').onclick = exportAsMarkdown;
+  document.getElementById('exportCopyBtn').onclick = copyForPaste;
+  document.getElementById('exportZipBtn').onclick = exportAsZip;
+  document.getElementById('exportCsvBtn').onclick = exportAsCsv;
+  document.getElementById('importJsonBtn').onclick = ()=> document.getElementById('importJsonInput').click();
+  document.getElementById('importJsonInput').onchange = (e)=>{
+    const file = e.target.files[0];
+    importJsonFile(file);
+    e.target.value = '';
+  };
+
+  /* ---- salvar automaticamente em pasta local (.md por entrada) ---- */
+  const supportsFolderSync = ('showDirectoryPicker' in window);
+  const IDB_NAME = 'diario-fs';
+  const IDB_STORE = 'handles';
+
+  function idbOpen(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore(IDB_STORE); };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function idbSet(key, val){
+    try{
+      const db = await idbOpen();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(val, key);
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror = ()=> reject(tx.error);
+      });
+    }catch(e){ return false; }
+  }
+  async function idbGet(key){
+    try{
+      const db = await idbOpen();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = ()=> resolve(req.result || null);
+        req.onerror = ()=> reject(req.error);
+      });
+    }catch(e){ return null; }
+  }
+
+  let folderHandle = null;
+  let pendingFolderHandle = null;
+  let folderAutoSync = false;
+
+  function flashFolderStatus(msg){
+    const el = document.getElementById('folderStatus');
+    el.textContent = msg;
+    setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 3500);
+  }
+
+  function updateFolderUI(){
+    document.getElementById('folderNotConnected').style.display = folderHandle ? 'none' : (pendingFolderHandle ? 'none' : 'block');
+    document.getElementById('folderConnected').style.display = folderHandle ? 'block' : 'none';
+    document.getElementById('folderReconnect').style.display = (!folderHandle && pendingFolderHandle) ? 'block' : 'none';
+    if(folderHandle) document.getElementById('folderNameLabel').textContent = folderHandle.name;
+    if(pendingFolderHandle) document.getElementById('folderPendingLabel').textContent = pendingFolderHandle.name;
+    document.getElementById('autoSyncToggle').classList.toggle('on', folderAutoSync);
+    document.getElementById('folderCryptoWarning').style.display = cryptoEnabled ? 'block' : 'none';
+  }
+
+  function slugify(str){
+    return (str||'').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40);
+  }
+
+  function entryFilename(e){
+    if(e.mdFile) return e.mdFile;
+    const d = new Date(e.createdAt);
+    const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')
+      +'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+    const slug = slugify(e.titulo) || e.id;
+    e.mdFile = stamp+'-'+slug+'.md';
+    return e.mdFile;
+  }
+
+  function yamlEsc(str){
+    return String(str==null?'':str).replace(/"/g,'\\"').replace(/\n/g,' ');
+  }
+
+  function yamlFrontmatter(e){
+    const modeLabel = {texto:'texto', perguntas:'pergunta-guiada', humor:'humor', gratidao:'gratidao', foto:'foto'};
+    const lines = ['---'];
+    lines.push('date: ' + e.createdAt);
+    if(e.titulo) lines.push('title: "' + yamlEsc(e.titulo) + '"');
+    lines.push('mode: ' + (modeLabel[e.mode] || e.mode));
+    if(e.mood) lines.push('mood: ' + e.mood);
+    if(e.tags && e.tags.length) lines.push('tags: [' + e.tags.map(t=>'"'+yamlEsc(t)+'"').join(', ') + ']');
+    lines.push('---');
+    return lines.join('\n') + '\n\n';
+  }
+
+  function entryToMarkdown(e){
+    const moodMap = Object.fromEntries(moods.map(m=>[m.id, m.em+' '+m.label]));
+    const modeLabel = {texto:'texto', perguntas:'pergunta guiada', humor:'humor', gratidao:'gratidão', foto:'foto'};
+    const d = new Date(e.createdAt);
+    const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}) + ' às ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    let out = yamlFrontmatter(e);
+    out += '# ' + (e.titulo ? e.titulo : dateStr) + '\n\n';
+    if(e.titulo) out += '*' + dateStr + '*\n\n';
+    out += '`' + (modeLabel[e.mode] || e.mode) + (e.mood ? ' · ' + moodMap[e.mood] : '') + '`\n\n';
+    if(e.subtitulo) out += '**' + e.subtitulo + '**\n\n';
+    if(e.prompt) out += '> ' + e.prompt + '\n\n';
+    if(e.content) out += e.content.split('\n').join('\n\n') + '\n\n';
+    if(e.tags && e.tags.length) out += e.tags.map(t=>'#'+t.replace(/\s+/g,'-')).join(' ') + '\n';
+    return out;
+  }
+
+  async function writeEntryFile(e){
+    if(!folderHandle) return;
+    try{
+      const fh = await folderHandle.getFileHandle(entryFilename(e), {create:true});
+      const writable = await fh.createWritable();
+      await writable.write(entryToMarkdown(e));
+      await writable.close();
+    }catch(err){ console.error('Falha ao gravar arquivo local', err); }
+  }
+
+  async function deleteEntryFile(e){
+    if(!folderHandle || !e.mdFile) return;
+    try{ await folderHandle.removeEntry(e.mdFile); }catch(err){ /* já pode não existir */ }
+  }
+
+  async function syncAllEntriesToFolder(){
+    if(!folderHandle) return;
+    flashFolderStatus('Sincronizando…');
+    for(const e of entries){ await writeEntryFile(e); }
+    await persist();
+    flashFolderStatus('Pronto — ' + entries.length + ' entradas gravadas na pasta.');
+  }
+
+  async function chooseFolder(){
+    if(!supportsFolderSync){ flashFolderStatus('Recurso indisponível neste navegador.'); return; }
+    try{
+      const handle = await window.showDirectoryPicker({ mode:'readwrite' });
+      folderHandle = handle;
+      pendingFolderHandle = null;
+      await idbSet('folderHandle', handle);
+      updateFolderUI();
+      flashFolderStatus('Pasta conectada: ' + handle.name);
+      await syncAllEntriesToFolder();
+    }catch(e){
+      if(e && e.name!=='AbortError') flashFolderStatus('Não consegui conectar a pasta.');
+    }
+  }
+
+  async function tryReconnectFolder(){
+    if(!supportsFolderSync) return;
+    const handle = await idbGet('folderHandle');
+    if(!handle) return;
+    try{
+      const perm = await handle.queryPermission({mode:'readwrite'});
+      if(perm==='granted'){ folderHandle = handle; }
+      else{ pendingFolderHandle = handle; }
+    }catch(e){ pendingFolderHandle = handle; }
+    updateFolderUI();
+  }
+
+  async function requestFolderPermission(){
+    if(!pendingFolderHandle) return;
+    try{
+      const perm = await pendingFolderHandle.requestPermission({mode:'readwrite'});
+      if(perm==='granted'){
+        folderHandle = pendingFolderHandle;
+        pendingFolderHandle = null;
+        updateFolderUI();
+        flashFolderStatus('Pasta reconectada.');
+      } else {
+        flashFolderStatus('Permissão não concedida.');
+      }
+    }catch(e){ flashFolderStatus('Não consegui reconectar.'); }
+  }
+
+  function initFolderSyncUI(){
+    document.getElementById('folderSyncUnsupported').style.display = supportsFolderSync ? 'none' : 'block';
+    document.getElementById('folderSyncSupported').style.display = supportsFolderSync ? 'block' : 'none';
+    if(!supportsFolderSync) return;
+    updateFolderUI();
+    document.getElementById('chooseFolderBtn').onclick = chooseFolder;
+    document.getElementById('changeFolderBtn').onclick = chooseFolder;
+    document.getElementById('reconnectFolderBtn').onclick = requestFolderPermission;
+    document.getElementById('syncNowBtn').onclick = syncAllEntriesToFolder;
+    document.getElementById('autoSyncToggle').onclick = ()=>{
+      folderAutoSync = !folderAutoSync;
+      updateFolderUI();
+    };
+  }
+
+  /* ---- mídias (bases de dados por tipo: livros, filmes, séries, jogos...) ---- */
+  const MEDIA_STORAGE_KEY = 'diario:media';
+
+  const mediaStatusOptions = [
+    {id:'planejado', label:'Quero começar'},
+    {id:'andamento', label:'Em andamento'},
+    {id:'concluido', label:'Concluído'},
+    {id:'pausado', label:'Pausado'},
+    {id:'abandonado', label:'Abandonado'},
+  ];
+
+  let mediaData = {
+    categories: [
+      {id:'livros', label:'Livros', icon:'📚'},
+      {id:'filmes', label:'Filmes', icon:'🎬'},
+      {id:'series', label:'Séries', icon:'📺'},
+      {id:'jogos', label:'Jogos', icon:'🎮'},
+    ],
+    items: { livros:[], filmes:[], series:[], jogos:[] },
+  };
+  let currentMediaCategory = 'livros';
+
+  async function loadMediaData(){
+    try{
+      const res = await dstore.get(MEDIA_STORAGE_KEY);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        if(parsed && parsed.categories && parsed.items) mediaData = parsed;
+      }
+    }catch(e){ /* usa os padrões */ }
+    if(!mediaData.categories.find(c=>c.id===currentMediaCategory)){
+      currentMediaCategory = mediaData.categories.length ? mediaData.categories[0].id : null;
+    }
+    renderMediaTabs();
+    renderMediaTable();
+  }
+
+  async function saveMediaData(){
+    try{ await dstore.set(MEDIA_STORAGE_KEY, JSON.stringify(mediaData)); }
+    catch(e){ console.error('Falha ao guardar mídias', e); }
+  }
+
+  function renderMediaTabs(){
+    const el = document.getElementById('mediaTabs');
+    el.innerHTML = '';
+    mediaData.categories.forEach(c=>{
+      const b = document.createElement('button');
+      b.className = 'media-tab' + (c.id===currentMediaCategory ? ' selected' : '');
+      b.type = 'button';
+      const label = document.createElement('span');
+      label.textContent = c.icon + ' ' + c.label;
+      b.appendChild(label);
+      const del = document.createElement('span');
+      del.className = 'media-tab-del';
+      del.textContent = '✕';
+      del.title = 'Excluir categoria';
+      del.onclick = (ev)=>{
+        ev.stopPropagation();
+        const items = mediaData.items[c.id] || [];
+        const msg = items.length
+          ? 'Excluir "'+c.label+'" apaga '+items.length+' item(ns) guardado(s) nela. Tem certeza?'
+          : 'Excluir a categoria "'+c.label+'"?';
+        if(!confirm(msg)) return;
+        mediaData.categories = mediaData.categories.filter(x=>x.id!==c.id);
+        delete mediaData.items[c.id];
+        if(currentMediaCategory===c.id){
+          currentMediaCategory = mediaData.categories.length ? mediaData.categories[0].id : null;
+        }
+        saveMediaData();
+        renderMediaTabs();
+        renderMediaTable();
+      };
+      b.appendChild(del);
+      b.onclick = ()=>{ currentMediaCategory = c.id; renderMediaTabs(); renderMediaTable(); };
+      el.appendChild(b);
+    });
+    const addBtn = document.createElement('button');
+    addBtn.className = 'media-tab-add';
+    addBtn.type = 'button';
+    addBtn.textContent = '+';
+    addBtn.title = 'Nova categoria';
+    addBtn.onclick = ()=>{
+      const row = document.getElementById('mediaAddCatRow');
+      const showing = row.style.display === 'flex';
+      row.style.display = showing ? 'none' : 'flex';
+      if(!showing) document.getElementById('mediaNewCatInput').focus();
+    };
+    el.appendChild(addBtn);
+  }
+
+  function mediaStarRating(item){
+    const wrap = document.createElement('div');
+    wrap.className = 'star-rating';
+    for(let i=1;i<=5;i++){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = '★';
+      b.className = (item.nota||0) >= i ? 'filled' : '';
+      b.title = i + ' de 5';
+      b.onclick = ()=>{
+        item.nota = (item.nota===i) ? 0 : i;
+        saveMediaData();
+        renderMediaTable();
+      };
+      wrap.appendChild(b);
+    }
+    return wrap;
+  }
+
+  function renderMediaTable(){
+    const body = document.getElementById('mediaTableBody');
+    const emptyMsg = document.getElementById('mediaEmptyMsg');
+    const table = document.getElementById('mediaTable');
+    body.innerHTML = '';
+    if(!currentMediaCategory){
+      table.style.display = 'none';
+      emptyMsg.style.display = 'block';
+      emptyMsg.textContent = 'Crie uma categoria acima para começar.';
+      return;
+    }
+    table.style.display = '';
+    const items = mediaData.items[currentMediaCategory] || [];
+    emptyMsg.style.display = items.length ? 'none' : 'block';
+    emptyMsg.textContent = 'Nada por aqui ainda — clique em "+ Novo item".';
+
+    items.forEach(item=>{
+      const tr = document.createElement('tr');
+
+      const tdTitle = document.createElement('td');
+      const titleInput = document.createElement('input');
+      titleInput.type = 'text'; titleInput.className = 'media-title-input';
+      titleInput.placeholder = 'Título';
+      titleInput.value = item.titulo || '';
+      titleInput.oninput = ()=>{ item.titulo = titleInput.value; };
+      titleInput.onblur = saveMediaData;
+      tdTitle.appendChild(titleInput);
+
+      const tdNota = document.createElement('td');
+      tdNota.appendChild(mediaStarRating(item));
+
+      const tdInicio = document.createElement('td');
+      const inicioInput = document.createElement('input');
+      inicioInput.type = 'date'; inicioInput.className = 'media-date-input';
+      inicioInput.value = item.inicio || '';
+      inicioInput.onchange = ()=>{ item.inicio = inicioInput.value; saveMediaData(); };
+      tdInicio.appendChild(inicioInput);
+
+      const tdTermino = document.createElement('td');
+      const terminoInput = document.createElement('input');
+      terminoInput.type = 'date'; terminoInput.className = 'media-date-input';
+      terminoInput.value = item.termino || '';
+      terminoInput.onchange = ()=>{ item.termino = terminoInput.value; saveMediaData(); };
+      tdTermino.appendChild(terminoInput);
+
+      const tdStatus = document.createElement('td');
+      const statusSelect = document.createElement('select');
+      statusSelect.className = 'media-status-select';
+      mediaStatusOptions.forEach(s=>{
+        const opt = document.createElement('option');
+        opt.value = s.id; opt.textContent = s.label;
+        if(item.status===s.id) opt.selected = true;
+        statusSelect.appendChild(opt);
+      });
+      statusSelect.onchange = ()=>{ item.status = statusSelect.value; saveMediaData(); };
+      tdStatus.appendChild(statusSelect);
+
+      const tdDel = document.createElement('td');
+      const delBtn = document.createElement('button');
+      delBtn.className = 'media-del-btn';
+      delBtn.type = 'button';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Excluir item';
+      delBtn.onclick = ()=>{
+        mediaData.items[currentMediaCategory] = mediaData.items[currentMediaCategory].filter(x=>x!==item);
+        saveMediaData();
+        renderMediaTable();
+      };
+      tdDel.appendChild(delBtn);
+
+      tr.appendChild(tdTitle); tr.appendChild(tdNota); tr.appendChild(tdInicio);
+      tr.appendChild(tdTermino); tr.appendChild(tdStatus); tr.appendChild(tdDel);
+      body.appendChild(tr);
+    });
+  }
+
+  function initMediaPanel(){
+    document.getElementById('mediaAddItemBtn').onclick = ()=>{
+      if(!currentMediaCategory) return;
+      if(!mediaData.items[currentMediaCategory]) mediaData.items[currentMediaCategory] = [];
+      mediaData.items[currentMediaCategory].push({ id: uid(), titulo:'', nota:0, inicio:'', termino:'', status:'planejado' });
+      saveMediaData();
+      renderMediaTable();
+      setTimeout(()=>{
+        const inputs = document.querySelectorAll('#mediaTableBody .media-title-input');
+        if(inputs.length) inputs[inputs.length-1].focus();
+      }, 0);
+    };
+
+    document.getElementById('mediaNewCatConfirm').onclick = ()=>{
+      const input = document.getElementById('mediaNewCatInput');
+      const name = input.value.trim();
+      if(!name) return;
+      const id = (slugify(name) || 'categoria') + '-' + Math.random().toString(36).slice(2,6);
+      mediaData.categories.push({id, label:name, icon:'🗂'});
+      mediaData.items[id] = [];
+      currentMediaCategory = id;
+      input.value = '';
+      document.getElementById('mediaAddCatRow').style.display = 'none';
+      saveMediaData();
+      renderMediaTabs();
+      renderMediaTable();
+    };
+    document.getElementById('mediaNewCatCancel').onclick = ()=>{
+      document.getElementById('mediaAddCatRow').style.display = 'none';
+    };
+  }
+
+  /* ---- UI de bloqueio / segurança ---- */
+  let lockMode = 'unlock';
+  let currentCryptoMeta = null;
+
+  function showLockOverlay(mode){
+    lockMode = mode;
+    const overlay = document.getElementById('lockOverlay');
+    const prompt = document.getElementById('lockPrompt');
+    const input1 = document.getElementById('lockPassInput');
+    const input2 = document.getElementById('lockPassInput2');
+    const btn = document.getElementById('lockSubmitBtn');
+    const err = document.getElementById('lockError');
+    input1.value=''; input2.value=''; err.textContent='';
+    if(mode==='unlock'){
+      prompt.textContent = 'Digite sua senha para abrir o diário.';
+      input2.style.display='none'; btn.textContent='Entrar';
+      document.getElementById('mainWrap').style.display='none';
+    } else if(mode==='create'){
+      prompt.textContent = 'Crie uma senha para proteger o diário. Guarde-a bem — sem ela, o conteúdo não pode ser recuperado.';
+      input2.style.display='block'; input2.placeholder='Confirme a senha'; btn.textContent='Ativar criptografia';
+    } else if(mode==='verify-disable'){
+      prompt.textContent = 'Digite a senha atual para desativar a criptografia.';
+      input2.style.display='none'; btn.textContent='Desativar';
+    } else if(mode==='verify-change-old'){
+      prompt.textContent = 'Digite a senha atual.';
+      input2.style.display='none'; btn.textContent='Continuar';
+    } else if(mode==='create-change-new'){
+      prompt.textContent = 'Digite a nova senha.';
+      input2.style.display='block'; input2.placeholder='Confirme a nova senha'; btn.textContent='Trocar senha';
+    }
+    overlay.style.display='flex';
+    setTimeout(()=>input1.focus(), 50);
+  }
+
+  function hideLockOverlay(){
+    document.getElementById('lockOverlay').style.display='none';
+    document.getElementById('mainWrap').style.display='';
+  }
+
+  function lockErrorMsg(msg){ document.getElementById('lockError').textContent = msg; }
+
+  function updateSecurityPanelUI(){
+    document.getElementById('securityOff').style.display = cryptoEnabled ? 'none' : 'block';
+    document.getElementById('securityOn').style.display = cryptoEnabled ? 'block' : 'none';
+  }
+
+  function flashSecurityStatus(msg){
+    const el = document.getElementById('securityStatus');
+    el.textContent = msg;
+    setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 3500);
+  }
+
+  async function handleLockSubmit(){
+    const p1 = document.getElementById('lockPassInput').value;
+    const p2 = document.getElementById('lockPassInput2').value;
+    const btn = document.getElementById('lockSubmitBtn');
+
+    if(lockMode==='unlock'){
+      if(!p1){ lockErrorMsg('Digite a senha.'); return; }
+      btn.disabled = true;
+      try{
+        const key = await deriveKey(p1, b64dec(currentCryptoMeta.salt));
+        await decryptString(key, currentCryptoMeta.verifier);
+        cryptoKey = key; cryptoEnabled = true;
+        hideLockOverlay();
+        await loadEntries();
+        updateSecurityPanelUI(); updateFolderUI();
+      }catch(e){ lockErrorMsg('Senha incorreta.'); }
+      btn.disabled = false;
+
+    } else if(lockMode==='create'){
+      if(p1.length<4){ lockErrorMsg('Use ao menos 4 caracteres.'); return; }
+      if(p1!==p2){ lockErrorMsg('As senhas não coincidem.'); return; }
+      btn.disabled = true;
+      try{
+        const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+        const key = await deriveKey(p1, saltBytes);
+        const verifier = await encryptString(key, 'diario-ok');
+        currentCryptoMeta = { salt: b64enc(saltBytes), verifier };
+        await setCryptoMeta(currentCryptoMeta);
+        cryptoKey = key; cryptoEnabled = true;
+        await persist();
+        hideLockOverlay();
+        updateSecurityPanelUI(); updateFolderUI();
+        flashSecurityStatus('Criptografia ativada.');
+      }catch(e){ lockErrorMsg('Não consegui ativar. Tente de novo.'); }
+      btn.disabled = false;
+
+    } else if(lockMode==='verify-disable'){
+      if(!p1){ lockErrorMsg('Digite a senha.'); return; }
+      btn.disabled = true;
+      try{
+        const key = await deriveKey(p1, b64dec(currentCryptoMeta.salt));
+        await decryptString(key, currentCryptoMeta.verifier);
+        cryptoEnabled = false; cryptoKey = null;
+        await deleteCryptoMeta();
+        currentCryptoMeta = null;
+        await persist();
+        hideLockOverlay();
+        updateSecurityPanelUI(); updateFolderUI();
+        flashSecurityStatus('Criptografia desativada.');
+      }catch(e){ lockErrorMsg('Senha incorreta.'); }
+      btn.disabled = false;
+
+    } else if(lockMode==='verify-change-old'){
+      if(!p1){ lockErrorMsg('Digite a senha.'); return; }
+      btn.disabled = true;
+      try{
+        const key = await deriveKey(p1, b64dec(currentCryptoMeta.salt));
+        await decryptString(key, currentCryptoMeta.verifier);
+        showLockOverlay('create-change-new');
+      }catch(e){ lockErrorMsg('Senha incorreta.'); }
+      btn.disabled = false;
+
+    } else if(lockMode==='create-change-new'){
+      if(p1.length<4){ lockErrorMsg('Use ao menos 4 caracteres.'); return; }
+      if(p1!==p2){ lockErrorMsg('As senhas não coincidem.'); return; }
+      btn.disabled = true;
+      try{
+        const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+        const key = await deriveKey(p1, saltBytes);
+        const verifier = await encryptString(key, 'diario-ok');
+        currentCryptoMeta = { salt: b64enc(saltBytes), verifier };
+        await setCryptoMeta(currentCryptoMeta);
+        cryptoKey = key;
+        await persist();
+        hideLockOverlay();
+        updateSecurityPanelUI(); updateFolderUI();
+        flashSecurityStatus('Senha alterada.');
+      }catch(e){ lockErrorMsg('Não consegui trocar. Tente de novo.'); }
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('enableCryptoBtn').onclick = ()=> showLockOverlay('create');
+  document.getElementById('lockNowBtn').onclick = ()=>{ cryptoKey=null; showLockOverlay('unlock'); };
+  document.getElementById('disableCryptoBtn').onclick = ()=> showLockOverlay('verify-disable');
+  document.getElementById('changePassBtn').onclick = ()=> showLockOverlay('verify-change-old');
+  document.getElementById('lockSubmitBtn').onclick = handleLockSubmit;
+  document.getElementById('lockPassInput').addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ document.getElementById('lockPassInput2').style.display==='none' ? handleLockSubmit() : document.getElementById('lockPassInput2').focus(); }
+  });
+  document.getElementById('lockPassInput2').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLockSubmit(); });
+
+  // ---- PWA: instalação e service worker ----
+  let deferredInstallPrompt = null;
+
+  function initPwa(){
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('./sw.js').catch(()=>{ /* segue sem cache offline */ });
+      });
+    }
+
+    const banner = document.getElementById('installBanner');
+    const bannerText = document.getElementById('installBannerText');
+    const bannerBtn = document.getElementById('installBannerBtn');
+    const bannerDismiss = document.getElementById('installBannerDismiss');
+    if(!banner) return;
+
+    const alreadyInstalled = (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    const dismissed = sessionStorage.getItem('diario:installBannerDismissed') === '1';
+    if(alreadyInstalled || dismissed) return;
+
+    // Chrome/Edge/Android: guarda o evento e mostra nosso próprio botão de instalar
+    window.addEventListener('beforeinstallprompt', (e)=>{
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      bannerText.textContent = 'Instale o Diário na tela inicial para abrir como um app.';
+      bannerBtn.style.display = '';
+      banner.style.display = 'flex';
+    });
+
+    bannerBtn.onclick = async ()=>{
+      if(!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      banner.style.display = 'none';
+    };
+
+    bannerDismiss.onclick = ()=>{
+      banner.style.display = 'none';
+      sessionStorage.setItem('diario:installBannerDismissed', '1');
+    };
+
+    // iOS Safari não dispara beforeinstallprompt — mostra a dica manual
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isSafari = /safari/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+    if(isIos && isSafari){
+      bannerText.textContent = 'Para instalar: toque em Compartilhar (□↑) e depois em "Adicionar à Tela de Início".';
+      bannerBtn.style.display = 'none';
+      banner.style.display = 'flex';
+    }
+  }
+
+  async function initApp(){
+    initPwa();
+    await loadSettings();
+    initFolderSyncUI();
+    await tryReconnectFolder();
+    initMediaPanel();
+    await loadMediaData();
+    currentCryptoMeta = await getCryptoMeta();
+    if(currentCryptoMeta){
+      cryptoEnabled = true;
+      showLockOverlay('unlock');
+    } else {
+      cryptoEnabled = false;
+      updateSecurityPanelUI(); updateFolderUI();
+      await loadEntries();
+    }
+    checkDueContraceptiveReminders();
+    setInterval(checkDueContraceptiveReminders, 60000);
+  }
+
+  function parseTagsInputValue(){
+    return document.getElementById('tagsInput').value.split(',').map(t=>t.trim()).filter(Boolean);
+  }
+
+  function renderQuickTags(){
+    const container = document.getElementById('quickTags');
+    if(!container) return;
+    const current = parseTagsInputValue().map(t=>t.toLowerCase());
+    container.innerHTML = quickTagSuggestions.map(t=>{
+      const active = current.includes(t.toLowerCase());
+      return `<button type="button" class="quick-tag-chip${active?' active':''}" data-tag="${t}">${t}</button>`;
+    }).join('');
+    container.querySelectorAll('.quick-tag-chip').forEach(btn=>{
+      btn.onclick = ()=>{
+        const list = parseTagsInputValue();
+        const tag = btn.dataset.tag;
+        const idx = list.findIndex(t=>t.toLowerCase()===tag.toLowerCase());
+        if(idx>=0) list.splice(idx,1); else list.push(tag);
+        document.getElementById('tagsInput').value = list.join(', ');
+        renderQuickTags();
+      };
+    });
+  }
+  document.getElementById('tagsInput').addEventListener('input', renderQuickTags);
+
+  document.getElementById('moodEditBtn').onclick = ()=>{
+    const editor = document.getElementById('moodEditor');
+    const opening = editor.style.display === 'none';
+    editor.style.display = opening ? 'flex' : 'none';
+    if(opening) renderMoodEditor();
+  };
+
+  document.addEventListener('click', (ev)=>{
+    const pill = ev.target.closest('.tag-pill[data-tag]');
+    if(!pill) return;
+    tagFilter = pill.dataset.tag;
+    currentRecall = 'etiquetas';
+    renderRecall();
+    const panel = document.getElementById('relembrarPanel');
+    if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  document.addEventListener('keydown', (ev)=>{
+    const tag = document.activeElement ? document.activeElement.tagName : '';
+    if(ev.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA'){
+      ev.preventDefault();
+      currentRecall = 'busca';
+      renderRecall();
+      const panel = document.getElementById('relembrarPanel');
+      if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+      setTimeout(()=>{
+        const inp = document.getElementById('searchInput');
+        if(inp) inp.focus();
+      }, 250);
+    }
+  });
+
+  document.getElementById('saveBtn').onclick = saveEntry;
+  renderModeTabs();
+  renderModeContent();
+  renderDial();
+  renderQuickTags();
+  initApp();
+})();
+</script>
+</body>
+</html>

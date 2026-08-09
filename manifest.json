@@ -1,0 +1,72 @@
+{
+  "name": "Diário — todas as formas de guardar e relembrar",
+  "short_name": "Diário",
+  "description": "Um diário pessoal com texto, humor, gratidão, fotos, ciclo menstrual, temperatura basal, contracepção e tábua de marés — tudo guardado localmente no seu dispositivo.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#e8dcc0",
+  "theme_color": "#e8dcc0",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
+
+sw.js:
+
+javascript
+// Service worker do Diário — cuida de deixar o app instalável e funcionando offline.
+// Estratégia: "stale-while-revalidate" para os arquivos do próprio app (serve do cache
+// na hora, e atualiza o cache em segundo plano quando há internet).
+const CACHE_NAME = 'diario-cache-v1';
+
+const APP_SHELL = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      const networkFetch = fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => cached);
+      return cached || networkFetch;
+    })
+  );
+});
